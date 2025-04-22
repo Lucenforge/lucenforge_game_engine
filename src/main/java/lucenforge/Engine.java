@@ -1,8 +1,8 @@
-package jjEngine;
+package lucenforge;
 
-import jjEngine.input.Keyboard;
-import jjEngine.output.Monitors;
-import jjEngine.output.Window;
+import lucenforge.input.Keyboard;
+import lucenforge.output.Monitors;
+import lucenforge.output.Window;
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;

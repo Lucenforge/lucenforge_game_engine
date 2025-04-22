@@ -5,9 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.jhwblender.engine</groupId>
-    <artifactId>Lucenforge _Java_Engine</artifactId>
+    <artifactId>Lucenforge_Java_Engine</artifactId>
     <version>1.0-SNAPSHOT</version>
-
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

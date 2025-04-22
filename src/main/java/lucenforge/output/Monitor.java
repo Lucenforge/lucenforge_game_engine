@@ -1,4 +1,4 @@
-package jjEngine.output;
+package lucenforge.output;
 
 import static org.lwjgl.glfw.GLFW.*;
 
