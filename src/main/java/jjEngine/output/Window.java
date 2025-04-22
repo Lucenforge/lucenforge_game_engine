@@ -24,7 +24,6 @@ public class Window {
     public Window(int width, int height, String title, Monitor monitor) {
         this.width = width;
         this.height = height;
-        this.title = title;
         this.monitor = monitor;
 
         //Set window properties
