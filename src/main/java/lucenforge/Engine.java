@@ -5,6 +5,7 @@ import lucenforge.input.Mouse;
 import lucenforge.output.Log;
 import lucenforge.output.Monitors;
 import lucenforge.output.Window;
+import lucenforge.graphics.Renderer;
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -23,7 +24,7 @@ public class Engine {
     private static Window window;
 
     public static void run() {
-        Log.writeln("LWJGL Version " + Version.getVersion() + " started!", Log.SYSTEM);
+        Log.writeln(Log.SYSTEM, "LWJGL Version " + Version.getVersion() + " started!");
 
         init();
         loop();
@@ -70,6 +71,11 @@ public class Engine {
 
         // Make the OpenGL context current
         glfwMakeContextCurrent(window.id());
+        // This line is critical for LWJGL's interoperation with GLFW's
+        // OpenGL context, or any context that is managed externally.
+        GL.createCapabilities();
+        // Initialize the renderer
+        Renderer.init();
         // Enable v-sync
         glfwSwapInterval(1);
         // Make the window visible
@@ -77,22 +83,20 @@ public class Engine {
     }
 
     private static void loop() {
-        // This line is critical for LWJGL's interoperation with GLFW's
-        // OpenGL context, or any context that is managed externally.
-        GL.createCapabilities();
-
         // Set the clear color
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key
         while ( !glfwWindowShouldClose(window.id())) {
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
-
-            glfwSwapBuffers(window.id()); // swap the color buffers
-
             // Poll for window events
             glfwPollEvents();
+
+            // use shader program
+            Renderer.nextFrame();
+
+            // swap the color buffers
+            glfwSwapBuffers(window.id());
         }
     }
 

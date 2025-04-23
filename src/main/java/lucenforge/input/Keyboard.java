@@ -1,9 +1,6 @@
 package lucenforge.input;
 
 import lucenforge.output.Window;
-
-import java.sql.Struct;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import static org.lwjgl.glfw.GLFW.*;
