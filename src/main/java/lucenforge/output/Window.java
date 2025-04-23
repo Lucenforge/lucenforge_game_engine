@@ -47,7 +47,7 @@ public class Window {
         glfwSetWindowSizeCallback(windowID, (window, newWidth, newHeight) -> {
             this.width = newWidth;
             this.height = newHeight;
-            System.out.println(newWidth + ", " + newHeight);
+            Log.writeln("Window resized to: " + Log.TELEMETRY + newWidth + ", " + newHeight);
         });
     }
 

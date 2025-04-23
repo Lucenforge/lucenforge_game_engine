@@ -13,6 +13,10 @@ public class Keyboard {
     static private final HashMap<Integer, Integer> keyMap = new HashMap<>();
     static private String charBuffer = "";
 
+    public static final int KEY_NOT_PRESSED = GLFW_RELEASE;
+    public static final int KEY_PRESSED = GLFW_PRESS;
+    public static final int KEY_HELD = GLFW_REPEAT;
+
     //Attach the keyboard input to a window
     public static void attach(Window attachedWindow){
         // Setup a key callback
@@ -40,12 +44,14 @@ public class Keyboard {
 
     //Get key status
     public static boolean isKeyPressed(int key) {
-        return keyMap.containsKey(key) && keyMap.get(key) != GLFW_RELEASE;
+        return keyMap.containsKey(key) && keyMap.get(key) != KEY_NOT_PRESSED;
     }
     public static boolean isKeyReleased(int key) {
-        return keyMap.containsKey(key) && keyMap.get(key) == GLFW_RELEASE;
+        return keyMap.containsKey(key) && keyMap.get(key) == KEY_NOT_PRESSED;
     }
     public static boolean isKeyHeld(int key) {
-        return keyMap.containsKey(key) && keyMap.get(key) == GLFW_REPEAT;
+        return keyMap.containsKey(key) && keyMap.get(key) == KEY_HELD;
     }
+
+    private Keyboard() {} // Prevent instantiation
 }

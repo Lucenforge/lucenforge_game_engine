@@ -19,7 +19,7 @@ public class Monitors {
                 monitors[monitorIndex] = new Monitor(monitorsBuffer.get(monitorIndex));
             }
         }else{
-            throw new IllegalStateException("Monitors already initialized");
+            Log.write(Log.WARNING, "Monitors already initialized");
         }
     }
 
@@ -31,4 +31,6 @@ public class Monitors {
     public static Monitor getMonitor(int index){
         return monitors[index];
     }
+
+    private Monitors() {} // Prevent instantiation
 }

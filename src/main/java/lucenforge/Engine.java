@@ -1,6 +1,8 @@
 package lucenforge;
 
 import lucenforge.input.Keyboard;
+import lucenforge.input.Mouse;
+import lucenforge.output.Log;
 import lucenforge.output.Monitors;
 import lucenforge.output.Window;
 import org.lwjgl.*;
@@ -21,7 +23,7 @@ public class Engine {
     private static Window window;
 
     public static void run() {
-        System.out.println("Hello LWJGL " + Version.getVersion() + "!");
+        Log.writeln("LWJGL Version " + Version.getVersion() + " started!", Log.SYSTEM);
 
         init();
         loop();
@@ -53,8 +55,9 @@ public class Engine {
         //Set the window position to the center
         window.setCenter();
 
-        // Set up the keyboard input
+        // Set up the inputs
         Keyboard.attach(window);
+        Mouse.attach(window);
 
         // Get the thread stack and push a new frame
         try ( MemoryStack stack = stackPush() ) {
@@ -93,4 +96,5 @@ public class Engine {
         }
     }
 
+    private Engine() {} // Prevent instantiation
 }

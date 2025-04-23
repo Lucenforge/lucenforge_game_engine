@@ -1,4 +1,5 @@
 import lucenforge.Engine;
+import lucenforge.output.Log;
 
 public class Main {
 
