@@ -41,7 +41,7 @@ public class Window {
         if ( windowID == NULL )
             throw new RuntimeException("Failed to create the GLFW window");
 
-        setIcon("src/res/icon.png");
+        setIcon("src/main/resources/icon.png");
 
         //Set the size callback
         glfwSetWindowSizeCallback(windowID, (window, newWidth, newHeight) -> {
