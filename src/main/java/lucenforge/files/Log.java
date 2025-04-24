@@ -3,6 +3,9 @@ package lucenforge.files;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 
 public class Log {
 
@@ -10,8 +13,36 @@ public class Log {
 
     public static void checkInit(){
         if(writer != null) return;
-        try{writer = new BufferedWriter(new FileWriter("_logs/log.txt", true));}
-        catch (IOException e) {System.err.println("Error initializing log file: " + e.getMessage());}
+        try{
+            //Create directory if it doesn't exist
+            java.nio.file.Path logDir = java.nio.file.Paths.get("_logs");
+            if (!Files.exists(logDir)) {
+                Files.createDirectories(logDir);
+            }
+            //Check number of files in directory
+            long numFiles = Files.list(logDir).count();
+            int maxLogs = Properties.getInt("logging", "max_logs");
+            while(numFiles >= maxLogs){
+                //Delete the oldest log file
+                java.nio.file.Path oldestLog = Files.list(logDir).min(Comparator.comparingLong((Path a) -> {
+                            try {
+                                return Files.getLastModifiedTime(a).toMillis();
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }))
+                        .orElse(null);
+                if(oldestLog != null){
+                    Files.delete(oldestLog);
+                    numFiles--;
+                }
+            }
+            String currentTimeSec = String.valueOf(System.currentTimeMillis()/1000);
+            writer = new BufferedWriter(new FileWriter("_logs/log_"+currentTimeSec+".txt", true));
+        }
+        catch (IOException e) {
+            System.err.println("Error initializing log file: " + e.getMessage());
+        }
     }
 
     // Log Types (ANSI Escape Codes)
