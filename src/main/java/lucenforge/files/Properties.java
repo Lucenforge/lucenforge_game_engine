@@ -24,12 +24,16 @@ public class Properties {
     }
 
     public static boolean getBoolean(String section, String key) {
-        return ini.get(section, key, Boolean.class);
+        return get(section, key, Boolean.class);
+    }
+    public static int getInt(String section, String key) {
+        return get(section, key, Integer.class);
     }
 
     public static void set(String section, String key, Object value) {
         checkInit();
         ini.put(section, key, value);
+        Log.writeln(Log.SYSTEM, "Set property: " + section + "." + key + " = " + value);
         try {
             ini.store();
         } catch (IOException e) {

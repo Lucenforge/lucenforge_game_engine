@@ -24,9 +24,6 @@ public class Engine {
     public static final int[] resolution = new int[]{800, 600};
 
     public static void run() {
-        // Initialize Log
-        Log.init();
-
         Log.writeln(Log.SYSTEM, "LWJGL Version " + Version.getVersion() + " started!");
 
         init();
@@ -53,8 +50,6 @@ public class Engine {
         if ( !glfwInit() )
             throw new IllegalStateException("Unable to initialize GLFW");
 
-        // Initialize the monitors
-        Monitors.init();
         // Create the window, primary for now until we can select a monitor
         window = new Window(Monitors.getPrimary());
         //Set the window position to the center
@@ -89,11 +84,6 @@ public class Engine {
             // swap the color buffers
             glfwSwapBuffers(window.id());
         }
-    }
-
-    // Set Options
-    public static void setRes(int x, int y){
-
     }
 
 

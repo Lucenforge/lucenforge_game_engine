@@ -8,7 +8,8 @@ public class Log {
 
     static BufferedWriter writer;
 
-    public static void init(){
+    public static void checkInit(){
+        if(writer != null) return;
         try{writer = new BufferedWriter(new FileWriter("_logs/log.txt", true));}
         catch (IOException e) {System.err.println("Error initializing log file: " + e.getMessage());}
     }
@@ -28,6 +29,7 @@ public class Log {
         write(EVENT, message);
     }
     public static void write(String logType, Object message) {
+        checkInit();
         System.out.print(logType);
         System.out.print(message);
         sendToLogFile(message.toString());
@@ -43,6 +45,7 @@ public class Log {
     }
 
     private static void sendToLogFile(String line){
+        //Strip ANSI Escape Codes
         line = line.replace(SYSTEM   , "");
         line = line.replace(FAILURE  , "");
         line = line.replace(SUCCESS  , "");
@@ -52,8 +55,8 @@ public class Log {
         line = line.replace(WARNING  , "");
         line = line.replace(EVENT    , "");
 
-        //todo (make sure to strip any ANSI escape codes)
         try{
+            checkInit();
             writer.write(line);
             writer.flush();
         }catch (IOException ex) {

@@ -1,6 +1,7 @@
 package lucenforge.output;
 
 import lucenforge.files.Log;
+import lucenforge.files.Properties;
 import org.lwjgl.glfw.*;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.*;
@@ -14,27 +15,25 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Window {
 
-    //Window properties (make these settable later)
-    public static final boolean isFullscreen = false;
-    public static final boolean isBorderless = false;
-    public static final boolean isResizable = true;
-    public static final int[] resolution;
-
     private Monitor monitor;
     private long windowID;
     private int width, height;
 
     public Window(Monitor monitor) {
-        this.width = width;
-        this.height = height;
+        this.width = Properties.getInt("window", "resolution_x");
+        this.height = Properties.getInt("window", "resolution_y");
         this.monitor = monitor;
 
         //Set window properties
+        boolean isResizable = Properties.getBoolean("window", "resizable");
+        boolean isBorderless = Properties.getBoolean("window", "borderless");
         glfwDefaultWindowHints(); // Configure GLFW
-        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE); //Set visibility?? (look this up)
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); //Set visibility?? (look this up)
         glfwWindowHint(GLFW_RESIZABLE, isResizable? GLFW_TRUE : GLFW_FALSE); //Set if the window is resizable
         glfwWindowHint(GLFW_DECORATED, isBorderless? GLFW_FALSE : GLFW_TRUE); //Set whether it has a frame or not (borderless key here)
 
+        String title = Properties.get("window", "title", String.class);
+        boolean isFullscreen = Properties.getBoolean("window", "fullscreen");
         windowID = glfwCreateWindow(width, height, title, isFullscreen? monitor.id() : NULL, NULL);
         if ( windowID == NULL )
             throw new RuntimeException("Failed to create the GLFW window");
