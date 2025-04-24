@@ -1,7 +1,6 @@
-package lucenforge.output;
+package lucenforge.files;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -9,7 +8,7 @@ public class Log {
 
     static BufferedWriter writer;
 
-    static {
+    public static void init(){
         try{writer = new BufferedWriter(new FileWriter("_logs/log.txt", true));}
         catch (IOException e) {System.err.println("Error initializing log file: " + e.getMessage());}
     }
@@ -44,8 +43,14 @@ public class Log {
     }
 
     private static void sendToLogFile(String line){
-        line.replace(SYSTEM, "");
-
+        line = line.replace(SYSTEM   , "");
+        line = line.replace(FAILURE  , "");
+        line = line.replace(SUCCESS  , "");
+        line = line.replace(DEBUG    , "");
+        line = line.replace(TELEMETRY, "");
+        line = line.replace(ERROR    , "");
+        line = line.replace(WARNING  , "");
+        line = line.replace(EVENT    , "");
 
         //todo (make sure to strip any ANSI escape codes)
         try{

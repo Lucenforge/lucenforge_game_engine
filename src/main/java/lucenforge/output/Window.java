@@ -1,5 +1,6 @@
 package lucenforge.output;
 
+import lucenforge.files.Log;
 import org.lwjgl.glfw.*;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.*;
@@ -14,19 +15,16 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 public class Window {
 
     //Window properties (make these settable later)
-    private static final boolean isFullscreen = false;
-    private static final boolean isBorderless = false;
-    private static final boolean isResizable = true;
-    private static final int[] resolution = new int[]{800, 600};
+    public static final boolean isFullscreen = false;
+    public static final boolean isBorderless = false;
+    public static final boolean isResizable = true;
+    public static final int[] resolution;
 
     private Monitor monitor;
     private long windowID;
     private int width, height;
 
     public Window(Monitor monitor) {
-        this(resolution[0], resolution[1], "lucenforge", monitor);
-    }
-    public Window(int width, int height, String title, Monitor monitor) {
         this.width = width;
         this.height = height;
         this.monitor = monitor;

@@ -2,7 +2,7 @@ package lucenforge;
 
 import lucenforge.input.Keyboard;
 import lucenforge.input.Mouse;
-import lucenforge.output.Log;
+import lucenforge.files.Log;
 import lucenforge.output.Monitors;
 import lucenforge.output.Window;
 import lucenforge.graphics.Renderer;
@@ -17,8 +17,16 @@ public class Engine {
 
     // The window handle
     private static Window window;
+    //Window properties
+    public static final boolean isFullscreen = false;
+    public static final boolean isBorderless = false;
+    public static final boolean isResizable = true;
+    public static final int[] resolution = new int[]{800, 600};
 
     public static void run() {
+        // Initialize Log
+        Log.init();
+
         Log.writeln(Log.SYSTEM, "LWJGL Version " + Version.getVersion() + " started!");
 
         init();
@@ -32,6 +40,9 @@ public class Engine {
         GLFWErrorCallback callback = glfwSetErrorCallback(null);
         assert callback != null;
         callback.free();
+
+        //Shut down everything
+        Log.writeln(Log.SYSTEM, "Lucenforge Engine Exit");
     }
 
     private static void init() {
@@ -78,10 +89,13 @@ public class Engine {
             // swap the color buffers
             glfwSwapBuffers(window.id());
         }
-
-        //Shut down everything
-        Log.writeln(Log.SYSTEM, "Engine Exiting");
     }
+
+    // Set Options
+    public static void setRes(int x, int y){
+
+    }
+
 
     private Engine() {} // Prevent instantiation
 }

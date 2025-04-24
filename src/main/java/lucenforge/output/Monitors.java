@@ -1,5 +1,6 @@
 package lucenforge.output;
 
+import lucenforge.files.Log;
 import org.lwjgl.*;
 
 import static org.lwjgl.glfw.GLFW.*;

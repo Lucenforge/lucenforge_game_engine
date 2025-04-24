@@ -1,6 +1,6 @@
 package lucenforge.input;
 
-import lucenforge.output.Log;
+import lucenforge.files.Log;
 import lucenforge.output.Window;
 
 import java.util.HashMap;
