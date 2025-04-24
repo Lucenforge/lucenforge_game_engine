@@ -1,6 +1,18 @@
 package lucenforge.output;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class Log {
+
+    static BufferedWriter writer;
+
+    static {
+        try{writer = new BufferedWriter(new FileWriter("_logs/log.txt", true));}
+        catch (IOException e) {System.err.println("Error initializing log file: " + e.getMessage());}
+    }
 
     // Log Types (ANSI Escape Codes)
     public static final String SYSTEM     = "\033[0;36m"; // CYAN
@@ -19,6 +31,7 @@ public class Log {
     public static void write(String logType, Object message) {
         System.out.print(logType);
         System.out.print(message);
+        sendToLogFile(message.toString());
     }
 
     // Write into log (with new-line)
@@ -30,8 +43,17 @@ public class Log {
         write("\n");
     }
 
-    private void sendToLogFile(){
+    private static void sendToLogFile(String line){
+        line.replace(SYSTEM, "");
+
+
         //todo (make sure to strip any ANSI escape codes)
+        try{
+            writer.write(line);
+            writer.flush();
+        }catch (IOException ex) {
+            Log.writeln(Log.ERROR, "Error writing to log file: " + ex.getMessage());
+        }
     }
 
 

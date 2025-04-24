@@ -8,15 +8,10 @@ import lucenforge.output.Window;
 import lucenforge.graphics.Renderer;
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.*;
-import org.lwjgl.system.*;
-
-import java.nio.*;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.system.MemoryStack.*;
 
 public class Engine {
 
@@ -47,8 +42,6 @@ public class Engine {
         if ( !glfwInit() )
             throw new IllegalStateException("Unable to initialize GLFW");
 
-        //Window setup went here
-
         // Initialize the monitors
         Monitors.init();
         // Create the window, primary for now until we can select a monitor
@@ -56,30 +49,17 @@ public class Engine {
         //Set the window position to the center
         window.setCenter();
 
+        // Set the OpenGL viewport to match new window size on resize
+        glfwSetFramebufferSizeCallback(window.id(), (win, width, height) -> {
+            glViewport(0, 0, width, height);
+        });
+
         // Set up the inputs
         Keyboard.attach(window);
         Mouse.attach(window);
 
-        // Get the thread stack and push a new frame
-        try ( MemoryStack stack = stackPush() ) {
-            IntBuffer pWidth = stack.mallocInt(1);
-            IntBuffer pHeight = stack.mallocInt(1);
-
-            // Get the window size passed to glfwCreateWindow
-            glfwGetWindowSize(window.id(), pWidth, pHeight);
-        }
-
-        // Make the OpenGL context current
-        glfwMakeContextCurrent(window.id());
-        // This line is critical for LWJGL's interoperation with GLFW's
-        // OpenGL context, or any context that is managed externally.
-        GL.createCapabilities();
         // Initialize the renderer
-        Renderer.init();
-        // Enable v-sync
-        glfwSwapInterval(1);
-        // Make the window visible
-        glfwShowWindow(window.id());
+        Renderer.init(window);
     }
 
     private static void loop() {
@@ -93,11 +73,14 @@ public class Engine {
             glfwPollEvents();
 
             // use shader program
-            Renderer.nextFrame();
+            Renderer.loop();
 
             // swap the color buffers
             glfwSwapBuffers(window.id());
         }
+
+        //Shut down everything
+        Log.writeln(Log.SYSTEM, "Engine Exiting");
     }
 
     private Engine() {} // Prevent instantiation

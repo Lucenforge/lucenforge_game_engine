@@ -1,8 +1,16 @@
 package lucenforge.graphics;
 
+import lucenforge.output.Window;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.system.MemoryStack;
+
+import java.nio.IntBuffer;
+
+import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.ARBVertexArrayObject.glBindVertexArray;
 import static org.lwjgl.opengl.ARBVertexArrayObject.glGenVertexArrays;
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.system.MemoryStack.stackPush;
 
 public class Renderer {
 
@@ -27,11 +35,35 @@ public class Renderer {
                     "}";
     private static int shaderProgram, vao;
 
-    public static void init(){
+    public static void init(Window window){
+
+        // Get the thread stack and push a new frame
+        try ( MemoryStack stack = stackPush() ) {
+            IntBuffer pWidth = stack.mallocInt(1);
+            IntBuffer pHeight = stack.mallocInt(1);
+
+            // Get the window size passed to glfwCreateWindow
+            glfwGetWindowSize(window.id(), pWidth, pHeight);
+        }
+
+        // Make the OpenGL context current
+        glfwMakeContextCurrent(window.id());
+        // This line is critical for LWJGL's interoperation with GLFW's
+        // OpenGL context, or any context that is managed externally.
+        GL.createCapabilities();
+
+        // Set the viewport to the correct size
+        glViewport(0, 0, window.width(), window.height());
+
         //Set the clear color to a dark gray
         clearColor = new float[]{0.1f, 0.1f, 0.1f, 1.0f};
 
         setupShaders();
+
+        // Enable v-sync
+        glfwSwapInterval(1);
+        // Make the window visible
+        glfwShowWindow(window.id());
     }
 
     private static void setupShaders(){
@@ -81,7 +113,7 @@ public class Renderer {
         glBindVertexArray(0);
     }
 
-    public static void nextFrame(){
+    public static void loop(){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(shaderProgram);

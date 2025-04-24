@@ -56,6 +56,15 @@ public class Window {
         return windowID;
     }
 
+    // Get the window's width
+    public int width() {
+        return width;
+    }
+    // Get the window's height
+    public int height() {
+        return height;
+    }
+
     //Set the window's position to the center of the monitor
     public void setCenter(){
         setPosition(monitor.width()/2 - width/2,
