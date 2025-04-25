@@ -1,5 +1,6 @@
 package lucenforge;
 
+import lucenforge.files.Properties;
 import lucenforge.input.Keyboard;
 import lucenforge.input.Mouse;
 import lucenforge.files.Log;
@@ -51,7 +52,8 @@ public class Engine {
             throw new IllegalStateException("Unable to initialize GLFW");
 
         // Create the window, primary for now until we can select a monitor
-        window = new Window(Monitors.getPrimary());
+        int monitorIndex = Properties.getInt("window", "monitor");
+        window = new Window(Monitors.getIndex(monitorIndex));
         //Set the window position to the center
         window.setCenter();
 

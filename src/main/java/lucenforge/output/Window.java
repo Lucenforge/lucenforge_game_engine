@@ -46,6 +46,8 @@ public class Window {
             this.height = newHeight;
             Log.writeln("Window resized to: " + Log.TELEMETRY + newWidth + ", " + newHeight);
         });
+
+        Log.writeln(Log.EVENT, "Window " + title + " started on monitor " + monitor.index() + " (" + monitor.name() + ") with resolution " + width + "x" + height);
     }
 
     //Get the monitor's id (used within GLFW)

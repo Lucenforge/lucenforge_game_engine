@@ -23,14 +23,12 @@ public class Mouse {
         // Set the mouse button callback
         glfwSetMouseButtonCallback(attachedWindow.id(), (window, button, action, mods) -> {
             buttonStatus.put(button, action == 1);
-            Log.writeln(Log.TELEMETRY, button + ": " + action);
         });
 
         // Set the scroll callback
         glfwSetScrollCallback(attachedWindow.id(), (window, xoffset, yoffset) -> {
             scrollX = xoffset;
             scrollY = yoffset;
-            Log.writeln( "Scroll: " + Log.TELEMETRY + xoffset + ", " + yoffset);
         });
 
     }

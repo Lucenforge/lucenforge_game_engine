@@ -32,6 +32,12 @@ public class Properties {
 
     public static void set(String section, String key, Object value) {
         checkInit();
+        // Check if the section exists
+        Object current = get(section, key, value.getClass());
+        if (current != null && current.equals(value))
+            return;
+
+        // If not, create it
         ini.put(section, key, value);
         Log.writeln(Log.SYSTEM, "Set property: " + section + "." + key + " = " + value);
         try {
