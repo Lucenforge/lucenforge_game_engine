@@ -61,6 +61,8 @@ public class Renderer {
 
     // Loads all shaders from the shaders directory
     private static void initShaders(){
+        //Check if the shaders directory exists, if not, create it
+        FileTools.createDirectory("src/main/resources/shaders");
         //Get list of all files in the shaders directory with the extension .vert.glsl or .frag.glsl
         ArrayList<Path> vertFiles = FileTools.getFilesInDir("src/main/resources/shaders", ".vert.glsl");
         ArrayList<Path> fragFiles = FileTools.getFilesInDir("src/main/resources/shaders", ".frag.glsl");

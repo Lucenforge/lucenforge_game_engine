@@ -89,7 +89,8 @@ public class Window {
             ByteBuffer imageData = STBImage.stbi_load(path, width, height, channels, 4); // force RGBA
 
             if (imageData == null) {
-                throw new RuntimeException("Failed to load icon: " + STBImage.stbi_failure_reason());
+                Log.writeln(Log.WARNING, "Failed to load icon: " + STBImage.stbi_failure_reason());
+                return;
             }
 
             // Create GLFWImage and set fields
