@@ -24,26 +24,9 @@ public class Engine {
     public static final boolean isResizable = true;
     public static final int[] resolution = new int[]{800, 600};
 
-    public static void run() {
+    public static void init() {
         Log.writeln(Log.SYSTEM, "LWJGL Version " + Version.getVersion() + " started!");
 
-        init();
-        loop();
-
-        // Free the window callbacks and destroy the window
-        glfwFreeCallbacks(window.id());
-
-        // Terminate GLFW and free the error callback
-        glfwTerminate();
-        GLFWErrorCallback callback = glfwSetErrorCallback(null);
-        assert callback != null;
-        callback.free();
-
-        //Shut down everything
-        Log.writeln(Log.SYSTEM, "Lucenforge Engine Exit");
-    }
-
-    private static void init() {
         // Setup an error callback
         GLFWErrorCallback.createPrint(System.err).set();
 
@@ -70,6 +53,13 @@ public class Engine {
         Renderer.init(window);
     }
 
+    public static void start(){
+        //Show the window after load
+        glfwShowWindow(window.id());
+        loop();
+        shutdown();
+    }
+
     private static void loop() {
         // Set the clear color
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -86,6 +76,23 @@ public class Engine {
             // swap the color buffers
             glfwSwapBuffers(window.id());
         }
+    }
+
+    private static void shutdown(){
+        // Free the window callbacks and destroy the window
+        glfwFreeCallbacks(window.id());
+
+        // Terminate GLFW and free the error callback
+        glfwTerminate();
+        GLFWErrorCallback callback = glfwSetErrorCallback(null);
+        assert callback != null;
+        callback.free();
+
+        //Renderer cleanup
+        Renderer.cleanup();
+
+        //Shut down everything
+        Log.writeln(Log.SYSTEM, "Lucenforge Engine Exit");
     }
 
 

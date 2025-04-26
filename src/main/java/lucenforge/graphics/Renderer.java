@@ -1,126 +1,106 @@
 package lucenforge.graphics;
 
+import lucenforge.files.FileTools;
+import lucenforge.files.Log;
 import lucenforge.output.Window;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.system.MemoryStack;
 
-import java.nio.IntBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.ARBVertexArrayObject.glBindVertexArray;
-import static org.lwjgl.opengl.ARBVertexArrayObject.glGenVertexArrays;
 import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.system.MemoryStack.stackPush;
 
 public class Renderer {
 
-    private static float[] clearColor;
-    private static float[] vertices = {
-            0.0f,  0.5f, 0.0f, // Top
-            -0.5f, -0.5f, 0.0f, // Bottom Left
-            0.5f, -0.5f, 0.0f  // Bottom Right
-    };
-    private static final String vertexShaderSource =
-            "#version 330 core\n" +
-                    "layout (location = 0) in vec3 aPos;\n" +
-                    "void main() {\n" +
-                    "    gl_Position = vec4(aPos, 1.0);\n" +
-                    "}";
+    // The shader programs to use for rendering
+    private static final HashMap<ShaderProgram, ArrayList<Mesh>> renderBatches = new HashMap<>();
+    // Lookup table for shaders
+    private static final HashMap<String, ShaderProgram> shaders = new HashMap<>();
 
-    private static final String fragmentShaderSource =
-            "#version 330 core\n" +
-                    "out vec4 FragColor;\n" +
-                    "void main() {\n" +
-                    "    FragColor = vec4(1.0, 0.5, 0.2, 1.0);\n" + // Orange
-                    "}";
-    private static int shaderProgram, vao;
-
-    public static void init(Window window){
-
-        // Get the thread stack and push a new frame
-        try ( MemoryStack stack = stackPush() ) {
-            IntBuffer pWidth = stack.mallocInt(1);
-            IntBuffer pHeight = stack.mallocInt(1);
-
-            // Get the window size passed to glfwCreateWindow
-            glfwGetWindowSize(window.id(), pWidth, pHeight);
-        }
-
-        // Make the OpenGL context current
+    public static void init(Window window) {
+        // Initialize OpenGL
         glfwMakeContextCurrent(window.id());
-        // This line is critical for LWJGL's interoperation with GLFW's
-        // OpenGL context, or any context that is managed externally.
         GL.createCapabilities();
-
-        // Set the viewport to the correct size
         glViewport(0, 0, window.width(), window.height());
 
-        //Set the clear color to a dark gray
-        clearColor = new float[]{0.1f, 0.1f, 0.1f, 1.0f};
+        initShaders(); // Initialize shaders
 
-        setupShaders();
-
-        // Enable v-sync
-        glfwSwapInterval(1);
-        // Make the window visible
-        glfwShowWindow(window.id());
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     }
 
-    private static void setupShaders(){
-        // Compile the vertex shader
-        int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, vertexShaderSource);
-        glCompileShader(vertexShader);
-        if (glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            throw new RuntimeException("Vertex shader compilation failed:\n" + glGetShaderInfoLog(vertexShader));
-        }
-
-        // Compile the fragment shader
-        int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, fragmentShaderSource);
-        glCompileShader(fragmentShader);
-        if (glGetShaderi(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            throw new RuntimeException("Fragment shader compilation failed:\n" + glGetShaderInfoLog(fragmentShader));
-        }
-
-        // Link shaders into a program
-        shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragmentShader);
-        glLinkProgram(shaderProgram);
-        if (glGetProgrami(shaderProgram, GL_LINK_STATUS) == GL_FALSE) {
-            throw new RuntimeException("Shader program linking failed:\n" + glGetProgramInfoLog(shaderProgram));
-        }
-
-        // Delete shaders after linking
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-
-        // === NEW: Set up VAO and VBO ===
-        vao = glGenVertexArrays();
-        glBindVertexArray(vao);
-
-        int vbo = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
-
-        // Vertex attribute pointer
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.BYTES, 0);
-        glEnableVertexAttribArray(0);
-
-        // Unbind VAO and VBO for safety
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-    }
-
-    public static void loop(){
+    public static void loop() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glUseProgram(shaderProgram);
-        glBindVertexArray(vao); // You need to bind the VAO before drawing!
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        glBindVertexArray(0);   // Optional, good habit
+        for(ShaderProgram shader : renderBatches.keySet()) {
+            ArrayList<Mesh> meshes = renderBatches.get(shader);
+            shader.bind();
+            for (Mesh mesh : meshes) {
+                mesh.render();
+            }
+            shader.unbind();
+        }
     }
 
-    private Renderer() {} // Prevent instantiation
+    // Adds a mesh to the render batch for the given shader
+    public static void addToRenderBatch(String shaderName, Mesh mesh) {
+        ShaderProgram shader = shaders.get(shaderName);
+        if (shader == null) {
+            Log.writeln(Log.WARNING, "Shader not found; Skipping: " + shaderName);
+            return;
+        }
+        ArrayList<Mesh> meshes = renderBatches.get(shader);
+        if (meshes == null) {
+            Log.writeln(Log.ERROR, "No render batch found for shader: " + shaderName);
+            return;
+        }
+        meshes.add(mesh);
+    }
+
+    // Loads all shaders from the shaders directory
+    private static void initShaders(){
+        //Get list of all files in the shaders directory with the extension .vert.glsl or .frag.glsl
+        ArrayList<Path> vertFiles = FileTools.getFilesInDir("src/main/resources/shaders", ".vert.glsl");
+        ArrayList<Path> fragFiles = FileTools.getFilesInDir("src/main/resources/shaders", ".frag.glsl");
+        assert(vertFiles.size() == fragFiles.size()) : "Number of vertex and fragment shaders do not match!";
+        //Check that the vertex and fragment shader names match
+        for(int i = 0; i < vertFiles.size(); i++){
+            String vertFilePath = vertFiles.get(i).toString();
+            String fragFilePath = fragFiles.get(i).toString();
+            String vertFileName = vertFilePath.substring(vertFilePath.lastIndexOf("\\") + 1, vertFilePath.indexOf("."));
+            String fragFileName = fragFilePath.substring(fragFilePath.lastIndexOf("\\") + 1, fragFilePath.indexOf("."));
+            //Check that the vertex and fragment shader names match
+            if(!vertFileName.equals(fragFileName)) {
+                Log.writeln(Log.WARNING, "Vertex and fragment shader names do not match; Skipping: ("
+                        + vertFileName + ", " + fragFileName + ")");
+                return;
+            }
+            //Read the shader files
+            String vertFileContents = FileTools.readFile(vertFilePath);
+            String fragFileContents = FileTools.readFile(fragFilePath);
+            //Create the shader program
+            ShaderProgram shader = new ShaderProgram(vertFileContents, fragFileContents);
+            //Load it into the shader lookup table
+            shaders.put(vertFileName, shader);
+            //Add the shader to the render batch
+            renderBatches.put(shader, new ArrayList<>());
+            Log.writeln(Log.DEBUG, "Shader loaded: " + fragFileName);
+        }
+    }
+
+    public static void cleanup() {
+        for(ShaderProgram shader : shaders.values()) {
+            //Clean up meshes
+            for(Mesh mesh : renderBatches.get(shader)) {
+                mesh.cleanup();
+            }
+            //Clean up shader
+            shader.cleanup();
+        }
+    }
+
+
+    private Renderer() {}
 }

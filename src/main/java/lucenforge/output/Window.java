@@ -28,7 +28,7 @@ public class Window {
         boolean isResizable = Properties.getBoolean("window", "resizable");
         boolean isBorderless = Properties.getBoolean("window", "borderless");
         glfwDefaultWindowHints(); // Configure GLFW
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); //Set visibility?? (look this up)
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); //Set initial visibility
         glfwWindowHint(GLFW_RESIZABLE, isResizable? GLFW_TRUE : GLFW_FALSE); //Set if the window is resizable
         glfwWindowHint(GLFW_DECORATED, isBorderless? GLFW_FALSE : GLFW_TRUE); //Set whether it has a frame or not (borderless key here)
 
@@ -47,7 +47,7 @@ public class Window {
             Log.writeln("Window resized to: " + Log.TELEMETRY + newWidth + ", " + newHeight);
         });
 
-        Log.writeln(Log.EVENT, "Window " + title + " started on monitor " + monitor.index() + " (" + monitor.name() + ") with resolution " + width + "x" + height);
+        Log.writeln(Log.SYSTEM, "Window " + title + " started on monitor " + monitor.index() + " (" + monitor.name() + ") with resolution " + width + "x" + height);
     }
 
     //Get the monitor's id (used within GLFW)
