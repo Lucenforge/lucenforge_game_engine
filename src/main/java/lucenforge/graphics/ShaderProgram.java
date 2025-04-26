@@ -1,9 +1,12 @@
 package lucenforge.graphics;
 
+import java.util.HashMap;
+
 import static org.lwjgl.opengl.GL20.*;
 
 public class ShaderProgram {
     private final int programId;
+    private HashMap<String, Integer> uniformIDs = new HashMap<>();
 
     public ShaderProgram(String vertexSrc, String fragmentSrc) {
         int vertexShader = compileShader(GL_VERTEX_SHADER, vertexSrc);
@@ -30,6 +33,19 @@ public class ShaderProgram {
             throw new RuntimeException("Shader compile failed: " + glGetShaderInfoLog(shader));
         }
         return shader;
+    }
+
+    public int getUniformID(String name) {
+        Integer id = uniformIDs.get(name);
+        if (id == null) {
+            // If the uniform ID is not cached, retrieve it from OpenGL
+            id = glGetUniformLocation(programId, name);
+            if (id == -1) {
+                throw new RuntimeException("Uniform not found: " + name);
+            }
+            uniformIDs.put(name, id);
+        }
+        return id;
     }
 
     public void bind() {

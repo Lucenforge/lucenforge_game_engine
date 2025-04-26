@@ -3,11 +3,10 @@ package lucenforge.graphics;
 import lucenforge.files.FileTools;
 import lucenforge.files.Log;
 import lucenforge.output.Window;
+import org.joml.Vector4f;
 import org.lwjgl.opengl.GL;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -30,14 +29,24 @@ public class Renderer {
         initShaders(); // Initialize shaders
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
+        // Enable blending
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
-    public static void loop() {
+    public static void nextFrame() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for(ShaderProgram shader : renderBatches.keySet()) {
+            // Get the uniform for the color ID
+            int flatColorID = shader.getUniformID("flatColor");
+            // Get the meshes for this shader
             ArrayList<Mesh> meshes = renderBatches.get(shader);
             shader.bind();
             for (Mesh mesh : meshes) {
+                // Set the color uniform
+                Vector4f color = mesh.getColor();
+                glUniform4f(flatColorID, color.x, color.y, color.z, color.w);
                 mesh.render();
             }
             shader.unbind();

@@ -56,45 +56,52 @@ public class Engine {
     public static void start(){
         //Show the window after load
         glfwShowWindow(window.id());
-        loop();
-        shutdown();
     }
 
-    private static void loop() {
-        // Set the clear color
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    public static void nextFrame() {
 
-        // Run the rendering loop until the user has attempted to close
-        // the window or has pressed the ESCAPE key
-        while ( !glfwWindowShouldClose(window.id())) {
-            // Poll for window events
-            glfwPollEvents();
+        // Poll for window events
+        glfwPollEvents();
 
-            // use shader program
-            Renderer.loop();
+        // use shader program
+        Renderer.nextFrame();
 
-            // swap the color buffers
-            glfwSwapBuffers(window.id());
-        }
+        // swap the color buffers
+        glfwSwapBuffers(window.id());
+
+        if(isShutdownRequested())
+            shutdown();
     }
 
-    private static void shutdown(){
-        // Free the window callbacks and destroy the window
-        glfwFreeCallbacks(window.id());
-
-        // Terminate GLFW and free the error callback
-        glfwTerminate();
-        GLFWErrorCallback callback = glfwSetErrorCallback(null);
-        assert callback != null;
-        callback.free();
-
-        //Renderer cleanup
+    public static void shutdown(){
+        // 1. Cleanup rendering stuff (while OpenGL is alive)
         Renderer.cleanup();
 
-        //Shut down everything
+        // 2. Free GLFW callbacks
+        glfwFreeCallbacks(window.id());
+
+        // 3. Destroy the window
+        glfwDestroyWindow(window.id());
+
+        // 4. Terminate GLFW itself
+        glfwTerminate();
+
+        // 5. Free the error callback
+        GLFWErrorCallback callback = glfwSetErrorCallback(null);
+        if (callback != null) {
+            callback.free();
+        }
+
+        // 6. Final shutdown logging
         Log.writeln(Log.SYSTEM, "Lucenforge Engine Exit");
+
+        // 7. Exit the program
+        System.exit(0);
     }
 
+    public static boolean isShutdownRequested() {
+        return glfwWindowShouldClose(window.id());
+    }
 
     private Engine() {} // Prevent instantiation
 }
