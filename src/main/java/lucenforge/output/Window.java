@@ -15,8 +15,8 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Window {
 
-    private Monitor monitor;
-    private long windowID;
+    private final Monitor monitor;
+    private final long windowID;
     private int width, height;
 
     public Window(Monitor monitor) {

@@ -1,5 +1,6 @@
 package lucenforge.graphics;
 
+import lucenforge.files.Log;
 import org.joml.Vector4f;
 
 import static org.lwjgl.opengl.GL20.*;
@@ -7,16 +8,16 @@ import static org.lwjgl.opengl.ARBVertexArrayObject.*;
 
 public class Mesh {
 
-    private final int vao; // Vertex Array Object
-    private final int vbo; // Vertex Buffer Object
-    private final int ebo; // Element Buffer Object
+    private int vao; // Vertex Array Object
+    private int vbo; // Vertex Buffer Object
+    private int ebo; // Element Buffer Object
 
     float[] vertices;
     int[] indices;
 
     private Vector4f color = new Vector4f(1f, 0f, 1f, 1f);
 
-    public Mesh(float[] vertices, int[] indices) {
+    public void init(float[] vertices, int[] indices) {
         this.vertices = vertices;
         this.indices = indices;
 
@@ -57,6 +58,10 @@ public class Mesh {
     }
 
     public void render() {
+        if(vertices == null){
+            Log.writeln(Log.ERROR, "Mesh not initialized; Cannot render!");
+            return;
+        }
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);

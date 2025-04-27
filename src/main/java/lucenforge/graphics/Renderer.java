@@ -1,8 +1,11 @@
 package lucenforge.graphics;
 
+import lucenforge.Engine;
 import lucenforge.files.FileTools;
 import lucenforge.files.Log;
 import lucenforge.output.Window;
+import org.joml.Vector2f;
+import org.joml.Vector2i;
 import org.joml.Vector4f;
 import org.lwjgl.opengl.GL;
 
@@ -20,6 +23,7 @@ public class Renderer {
     // Lookup table for shaders
     private static final HashMap<String, ShaderProgram> shaders = new HashMap<>();
 
+    // Initialize the renderer
     public static void init(Window window) {
         // Initialize OpenGL
         glfwMakeContextCurrent(window.id());
@@ -35,6 +39,7 @@ public class Renderer {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
+    // Render Loop Iteration: Clears the screen and prepares for the next frame
     public static void nextFrame() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for(ShaderProgram shader : renderBatches.keySet()) {
@@ -101,6 +106,7 @@ public class Renderer {
         }
     }
 
+    // Cleans up all shaders and meshes
     public static void cleanup() {
         for(ShaderProgram shader : shaders.values()) {
             //Clean up meshes
@@ -112,6 +118,20 @@ public class Renderer {
         }
     }
 
+    // Convert pixel coordinates to normalized device coordinates
+    public static Vector2f pxToRaw(Vector2i p){
+        float x = ((float)p.x / Engine.getWindow().width()) * 2 - 1;
+        float y = ((float)p.y / Engine.getWindow().height()) * 2 - 1;
+        return new Vector2f(x, y);
+    }
+    // Convert pixel size to normalized device size todo: make square
+    public static float pxToRaw(float p){
+        int windowWidth = Engine.getWindow().width();
+        int windowHeight = Engine.getWindow().height();
+        float x = (p / Engine.getWindow().width()) * 2;
+        float y = (p / Engine.getWindow().height()) * 2;
+        return (x + y)/2;
+    }
 
     private Renderer() {}
 }

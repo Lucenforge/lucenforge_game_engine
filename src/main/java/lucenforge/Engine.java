@@ -18,11 +18,6 @@ public class Engine {
 
     // The window handle
     private static Window window;
-    //Window properties
-    public static final boolean isFullscreen = false;
-    public static final boolean isBorderless = false;
-    public static final boolean isResizable = true;
-    public static final int[] resolution = new int[]{800, 600};
 
     public static void init() {
         Log.writeln(Log.SYSTEM, "LWJGL Version " + Version.getVersion() + " started!");
@@ -101,6 +96,10 @@ public class Engine {
 
     public static boolean isShutdownRequested() {
         return glfwWindowShouldClose(window.id());
+    }
+
+    public static Window getWindow() {
+        return window;
     }
 
     private Engine() {} // Prevent instantiation
