@@ -6,29 +6,41 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.ARBVertexArrayObject.*;
 
 public class Mesh {
-    private final int vao;
-    private final int vbo;
-    private final int vertexCount;
+
+    private final int vao; // Vertex Array Object
+    private final int vbo; // Vertex Buffer Object
+    private final int ebo; // Element Buffer Object
+
+    float[] vertices;
+    int[] indices;
 
     private Vector4f color = new Vector4f(1f, 0f, 1f, 1f);
 
-    public Mesh(float[] vertices) {
-        vertexCount = vertices.length / 3;
+    public Mesh(float[] vertices, int[] indices) {
+        this.vertices = vertices;
+        this.indices = indices;
 
         vao = glGenVertexArrays();
+        vbo = glGenBuffers();
+        ebo = glGenBuffers();
+
         glBindVertexArray(vao);
 
-        vbo = glGenBuffers();
+        // Vertex buffer
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
 
+        // Element buffer
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
+
+        // Vertex attribute pointer (position only)
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.BYTES, 0);
         glEnableVertexAttribArray(0);
 
+        // Unbind VBO (safe), but DO NOT unbind EBO while VAO is still bound
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
-
-        // Load color
     }
 
     public void setColor(int r, int g, int b){
@@ -46,12 +58,13 @@ public class Mesh {
 
     public void render() {
         glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+        glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
     }
 
     public void cleanup() {
-        glDeleteBuffers(vbo);
         glDeleteVertexArrays(vao);
+        glDeleteBuffers(vbo);
+        glDeleteBuffers(ebo);
     }
 }
