@@ -6,75 +6,49 @@ import lucenforge.files.Log;
 import lucenforge.output.Window;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
-import org.joml.Vector4f;
 import org.lwjgl.opengl.GL;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
+import static org.lwjgl.opengl.GL11.glViewport;
 
-public class Renderer {
+public class GraphicsManager {
 
-    // The shader programs to use for rendering
-    private static final HashMap<ShaderProgram, ArrayList<Mesh>> renderBatches = new HashMap<>();
     // Lookup table for shaders
-    private static final HashMap<String, ShaderProgram> shaders = new HashMap<>();
+    public static HashMap<String, Shader> masterShaders;
+    // List of all render layers
+    private static final ArrayList<RenderLayer> renderLayers = new ArrayList<>();
 
     // Initialize the renderer
     public static void init(Window window) {
+
         // Initialize OpenGL
         glfwMakeContextCurrent(window.id());
         GL.createCapabilities();
         glViewport(0, 0, window.width(), window.height());
 
-        initShaders(); // Initialize shaders
-
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-
-        // Enable blending
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // Initialize shaders
+        loadShaderFiles();
     }
 
-    // Render Loop Iteration: Clears the screen and prepares for the next frame
-    public static void nextFrame() {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        for(ShaderProgram shader : renderBatches.keySet()) {
-            // Get the uniform for the color ID
-            int flatColorID = shader.getUniformID("flatColor");
-            // Get the meshes for this shader
-            ArrayList<Mesh> meshes = renderBatches.get(shader);
-            shader.bind();
-            for (Mesh mesh : meshes) {
-                // Set the color uniform
-                Vector4f color = mesh.getColor();
-                glUniform4f(flatColorID, color.x, color.y, color.z, color.w);
-                mesh.render();
-            }
-            shader.unbind();
-        }
-    }
-
-    // Adds a mesh to the render batch for the given shader
-    public static void addToRenderBatch(String shaderName, Mesh mesh) {
-        ShaderProgram shader = shaders.get(shaderName);
-        if (shader == null) {
-            Log.writeln(Log.WARNING, "Shader not found; Skipping: " + shaderName);
+    // Register a render layer
+    public static void registerRenderLayer(RenderLayer layer) {
+        if (layer == null) {
+            Log.writeln(Log.ERROR, "Attempted to register a null render layer!");
             return;
         }
-        ArrayList<Mesh> meshes = renderBatches.get(shader);
-        if (meshes == null) {
-            Log.writeln(Log.ERROR, "No render batch found for shader: " + shaderName);
-            return;
-        }
-        meshes.add(mesh);
+        renderLayers.add(layer);
+        Log.writeln(Log.DEBUG, "Render layer registered: " + layer.getClass().getSimpleName());
     }
 
     // Loads all shaders from the shaders directory
-    private static void initShaders(){
+    private static void loadShaderFiles(){
+        if(masterShaders != null)
+            return;
+        masterShaders = new HashMap<>();
         //Check if the shaders directory exists, if not, create it
         FileTools.createDirectory("src/main/resources/shaders");
         //Get list of all files in the shaders directory with the extension .vert.glsl or .frag.glsl
@@ -97,24 +71,10 @@ public class Renderer {
             String vertFileContents = FileTools.readFile(vertFilePath);
             String fragFileContents = FileTools.readFile(fragFilePath);
             //Create the shader program
-            ShaderProgram shader = new ShaderProgram(vertFileContents, fragFileContents);
+            Shader shader = new Shader(vertFileContents, fragFileContents);
             //Load it into the shader lookup table
-            shaders.put(vertFileName, shader);
-            //Add the shader to the render batch
-            renderBatches.put(shader, new ArrayList<>());
+            masterShaders.put(vertFileName, shader);
             Log.writeln(Log.DEBUG, "Shader loaded: " + fragFileName);
-        }
-    }
-
-    // Cleans up all shaders and meshes
-    public static void cleanup() {
-        for(ShaderProgram shader : shaders.values()) {
-            //Clean up meshes
-            for(Mesh mesh : renderBatches.get(shader)) {
-                mesh.cleanup();
-            }
-            //Clean up shader
-            shader.cleanup();
         }
     }
 
@@ -126,12 +86,19 @@ public class Renderer {
     }
     // Convert pixel size to normalized device size todo: make square
     public static float pxToRaw(float p){
-        int windowWidth = Engine.getWindow().width();
-        int windowHeight = Engine.getWindow().height();
         float x = (p / Engine.getWindow().width()) * 2;
         float y = (p / Engine.getWindow().height()) * 2;
         return (x + y)/2;
     }
 
-    private Renderer() {}
+    public static void cleanup() {
+        // Cleanup all render layers
+        for (RenderLayer layer : renderLayers) {
+            layer.cleanup();
+        }
+        renderLayers.clear();
+        Log.writeln(Log.DEBUG, "All render layers cleaned up.");
+    }
+
+    private GraphicsManager(){} // Prevent instantiation
 }

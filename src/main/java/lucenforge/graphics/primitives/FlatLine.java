@@ -1,16 +1,16 @@
 package lucenforge.graphics.primitives;
 
-import lucenforge.Engine;
-import lucenforge.graphics.Renderer;
+import lucenforge.graphics.GraphicsManager;
+import lucenforge.graphics.RenderLayer;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 
 public class FlatLine extends FlatQuadrilateral{
 
     public FlatLine(Vector2i p1, Vector2i p2, float width){
-        Vector2f a = Renderer.pxToRaw(p1);
-        Vector2f b = Renderer.pxToRaw(p2);
-        width = Renderer.pxToRaw(width);
+        Vector2f a = GraphicsManager.pxToRaw(p1);
+        Vector2f b = GraphicsManager.pxToRaw(p2);
+        width = GraphicsManager.pxToRaw(width);
         init(a, b, width);
     }
 

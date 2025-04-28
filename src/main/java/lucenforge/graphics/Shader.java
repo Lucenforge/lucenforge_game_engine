@@ -4,11 +4,11 @@ import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL20.*;
 
-public class ShaderProgram {
+public class Shader {
     private final int programId;
-    private HashMap<String, Integer> uniformIDs = new HashMap<>();
+    private final HashMap<String, Integer> uniformIDs = new HashMap<>();
 
-    public ShaderProgram(String vertexSrc, String fragmentSrc) {
+    public Shader(String vertexSrc, String fragmentSrc) {
         int vertexShader = compileShader(GL_VERTEX_SHADER, vertexSrc);
         int fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSrc);
 

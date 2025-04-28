@@ -80,7 +80,6 @@ public class FileTools {
         }
     }
 
-
     //Prevent instantiation
     public FileTools(){}
 }

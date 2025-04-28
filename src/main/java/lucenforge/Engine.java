@@ -1,12 +1,13 @@
 package lucenforge;
 
 import lucenforge.files.Properties;
+import lucenforge.graphics.GraphicsManager;
 import lucenforge.input.Keyboard;
 import lucenforge.input.Mouse;
 import lucenforge.files.Log;
 import lucenforge.output.Monitors;
 import lucenforge.output.Window;
-import lucenforge.graphics.Renderer;
+import lucenforge.graphics.RenderLayer;
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 
@@ -44,8 +45,9 @@ public class Engine {
         Keyboard.attach(window);
         Mouse.attach(window);
 
+
         // Initialize the renderer
-        Renderer.init(window);
+        GraphicsManager.init(window);
     }
 
     public static void start(){
@@ -53,14 +55,13 @@ public class Engine {
         glfwShowWindow(window.id());
     }
 
-    public static void nextFrame() {
-
+    // Frame Loop Iteration: Begins a new frame, polls for events
+    public static void frameBegin() {
         // Poll for window events
         glfwPollEvents();
-
-        // use shader program
-        Renderer.nextFrame();
-
+    }
+    // Frame Loop Iteration: Ends the current frame, swaps buffers
+    public static void frameEnd(){
         // swap the color buffers
         glfwSwapBuffers(window.id());
 
@@ -70,7 +71,7 @@ public class Engine {
 
     public static void shutdown(){
         // 1. Cleanup rendering stuff (while OpenGL is alive)
-        Renderer.cleanup();
+        GraphicsManager.cleanup();
 
         // 2. Free GLFW callbacks
         glfwFreeCallbacks(window.id());
