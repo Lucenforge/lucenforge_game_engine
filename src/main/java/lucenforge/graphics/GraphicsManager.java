@@ -3,6 +3,7 @@ package lucenforge.graphics;
 import lucenforge.Engine;
 import lucenforge.files.FileTools;
 import lucenforge.files.Log;
+import lucenforge.files.Properties;
 import lucenforge.output.Window;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
@@ -12,8 +13,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
-import static org.lwjgl.opengl.GL11.glViewport;
+import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL20.*;
 
 public class GraphicsManager {
 
@@ -25,10 +26,13 @@ public class GraphicsManager {
     // Initialize the renderer
     public static void init(Window window) {
 
+
+
         // Initialize OpenGL
-        glfwMakeContextCurrent(window.id());
-        GL.createCapabilities();
-        glViewport(0, 0, window.width(), window.height());
+        glfwMakeContextCurrent(window.id()); // Make the window's context current
+        GL.createCapabilities(); // Initialize OpenGL capabilities
+        glViewport(0, 0, window.width(), window.height());  // Set the viewport to half the window size
+        glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (multisampling)
 
         // Initialize shaders
         loadShaderFiles();

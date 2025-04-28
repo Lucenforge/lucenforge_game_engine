@@ -30,6 +30,16 @@ public class Engine {
         if ( !glfwInit() )
             throw new IllegalStateException("Unable to initialize GLFW");
 
+        // Initialize graphics settings
+        Integer antiAliasingLevel = Properties.getInt("graphics", "anti-aliasing");
+        if(antiAliasingLevel == null) {
+            antiAliasingLevel = 4; // Default to 4x MSAA
+            Properties.set("graphics", "anti_aliasing", antiAliasingLevel);
+            Log.writeln(Log.WARNING, "Anti-aliasing level not set in properties file. Defaulting to 4x MSAA.");
+        }
+        Log.writeln(Log.DEBUG, "Anti-aliasing level: " + antiAliasingLevel);
+        glfwWindowHint(GLFW_SAMPLES, antiAliasingLevel);
+
         // Create the window, primary for now until we can select a monitor
         int monitorIndex = Properties.getInt("window", "monitor");
         window = new Window(Monitors.getIndex(monitorIndex));

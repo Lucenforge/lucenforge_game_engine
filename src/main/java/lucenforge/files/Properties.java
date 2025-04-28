@@ -26,7 +26,7 @@ public class Properties {
     public static boolean getBoolean(String section, String key) {
         return get(section, key, Boolean.class);
     }
-    public static int getInt(String section, String key) {
+    public static Integer getInt(String section, String key) {
         return get(section, key, Integer.class);
     }
 
