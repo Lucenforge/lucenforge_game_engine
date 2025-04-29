@@ -6,7 +6,6 @@ import lucenforge.output.Window;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -16,6 +15,8 @@ public class GraphicsManager {
 
     // Lookup table for shaders
     public static HashMap<String, Shader> masterShaders;
+    // Lookup table for meshes
+    public static HashMap<String, Mesh> masterMeshes;
     // List of all render layers
     private static final ArrayList<RenderLayer> renderLayers = new ArrayList<>();
 
@@ -32,8 +33,9 @@ public class GraphicsManager {
         Log.writeln(Log.DEBUG, "Graphics: Renderer: " + glGetString(GL_RENDERER));
         Log.writeln(Log.DEBUG, "Graphics: Vendor: " + glGetString(GL_VENDOR));
 
-        // Initialize shaders
-        loadShaderFiles();
+        // Load shaders and meshes
+        masterShaders = FileTools.loadShaderFiles();
+        masterMeshes = FileTools.loadMeshFiles();
     }
 
     // Register a render layer
@@ -44,40 +46,6 @@ public class GraphicsManager {
         }
         renderLayers.add(layer);
         Log.writeln(Log.DEBUG, "Render layer registered: " + layer.getClass().getSimpleName());
-    }
-
-    // Loads all shaders from the shaders directory
-    private static void loadShaderFiles(){
-        if(masterShaders != null)
-            return;
-        masterShaders = new HashMap<>();
-        //Check if the shaders directory exists, if not, create it
-        FileTools.createDirectory("src/main/resources/shaders");
-        //Get list of all files in the shaders directory with the extension .vert.glsl or .frag.glsl
-        ArrayList<Path> vertFiles = FileTools.getFilesInDir("src/main/resources/shaders", ".vert.glsl");
-        ArrayList<Path> fragFiles = FileTools.getFilesInDir("src/main/resources/shaders", ".frag.glsl");
-        assert(vertFiles.size() == fragFiles.size()) : "Number of vertex and fragment shaders do not match!";
-        //Check that the vertex and fragment shader names match
-        for(int i = 0; i < vertFiles.size(); i++){
-            String vertFilePath = vertFiles.get(i).toString();
-            String fragFilePath = fragFiles.get(i).toString();
-            String vertFileName = vertFilePath.substring(vertFilePath.lastIndexOf("\\") + 1, vertFilePath.indexOf("."));
-            String fragFileName = fragFilePath.substring(fragFilePath.lastIndexOf("\\") + 1, fragFilePath.indexOf("."));
-            //Check that the vertex and fragment shader names match
-            if(!vertFileName.equals(fragFileName)) {
-                Log.writeln(Log.WARNING, "Vertex and fragment shader names do not match; Skipping: ("
-                        + vertFileName + ", " + fragFileName + ")");
-                return;
-            }
-            //Read the shader files
-            String vertFileContents = FileTools.readFile(vertFilePath);
-            String fragFileContents = FileTools.readFile(fragFilePath);
-            //Create the shader program
-            Shader shader = new Shader(vertFileContents, fragFileContents);
-            //Load it into the shader lookup table
-            masterShaders.put(vertFileName, shader);
-            Log.writeln(Log.DEBUG, "Shader loaded: " + fragFileName);
-        }
     }
 
     // Convert pixel coordinates to normalized device coordinates
@@ -101,6 +69,15 @@ public class GraphicsManager {
         }
         renderLayers.clear();
         Log.writeln(Log.DEBUG, "All render layers cleaned up.");
+    }
+
+    public static Mesh getMeshFile(String name, Mesh.Usage usage) {
+        if (masterMeshes.containsKey(name)) {
+            return masterMeshes.get(name).init(usage);
+        } else {
+            Log.writeln(Log.ERROR, "Mesh not found: " + name);
+            return null;
+        }
     }
 
     private GraphicsManager(){} // Prevent instantiation

@@ -41,8 +41,12 @@ public class RenderLayer {
         }
     }
 
+    public void add(String meshName, String shaderName){
+
+    }
+
     // Adds a mesh to the render batch for the given shader
-    public void add(String shaderName, Mesh mesh) {
+    public void add(Mesh mesh, String shaderName) {
         // Check if the shader exists in the lookup table
         if (!shaders.containsKey(shaderName)){
             // If it doesn't, try to get it from the master shaders
