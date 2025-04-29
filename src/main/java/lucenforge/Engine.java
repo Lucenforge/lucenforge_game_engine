@@ -7,6 +7,8 @@ import lucenforge.input.Mouse;
 import lucenforge.files.Log;
 import lucenforge.output.Monitors;
 import lucenforge.output.Window;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
@@ -63,10 +65,13 @@ public class Engine {
         glfwPollEvents();
     }
     // Frame Loop Iteration: Clears the screen and depth buffer
-    public static void clearScreen(){ clearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);}
-    public static void clearScreen(int clearFlags) {
+    public static void clearScreen(){ clearScreen(
+            GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
+            new Vector4f(0.1f, 0.1f, 0.1f, 1.0f));
+    }
+    public static void clearScreen(int clearFlags, Vector4f color) {
         // Clear the screen and depth buffer (or not)
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // todo make this settable
+        glClearColor(color.x, color.y, color.z, color.w);
         glClear(clearFlags);
     }
     // Frame Loop Iteration: Ends the current frame, swaps buffers
