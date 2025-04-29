@@ -23,17 +23,33 @@ public class Properties {
         }
     }
 
-    public static boolean getBoolean(String section, String key) {
-        return get(section, key, Boolean.class);
+    // get boolean
+    public static boolean get(String section, String key, Boolean defaultValue) {
+        return get(section, key, Boolean.class, defaultValue);
     }
-    public static Integer getInt(String section, String key) {
-        return get(section, key, Integer.class);
+    // get integer
+    public static int get(String section, String key, Integer defaultValue) {
+        return get(section, key, Integer.class, defaultValue);
+    }
+    // get float
+    public static String get(String section, String key, String defaultValue) {
+        return get(section, key, String.class, defaultValue);
+    }
+    // get anything else
+    public static <T> T get(String section, String key, Class<T> type, T defaultValue) {
+        checkInit();
+        T value = ini.get(section, key, type);
+        if (value == null) {
+            set(section, key, defaultValue);
+            return defaultValue;
+        }
+        return value;
     }
 
     public static void set(String section, String key, Object value) {
         checkInit();
         // Check if the section exists
-        Object current = get(section, key, value.getClass());
+        Object current = get(section, key, value.getClass(), null);
         if (current != null && current.equals(value))
             return;
 
@@ -45,11 +61,6 @@ public class Properties {
         } catch (IOException e) {
             Log.writeln(Log.ERROR, "Error saving properties file: " + e.getMessage());
         }
-    }
-
-    public static <T> T get(String section, String key, Class<T> type) {
-        checkInit();
-        return ini.get(section, key, type);
     }
 
     // Preventing instantiation

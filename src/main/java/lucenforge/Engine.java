@@ -7,9 +7,9 @@ import lucenforge.input.Mouse;
 import lucenforge.files.Log;
 import lucenforge.output.Monitors;
 import lucenforge.output.Window;
-import lucenforge.graphics.RenderLayer;
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
+import org.lwjgl.opengl.GL;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -30,18 +30,8 @@ public class Engine {
         if ( !glfwInit() )
             throw new IllegalStateException("Unable to initialize GLFW");
 
-        // Initialize graphics settings
-        Integer antiAliasingLevel = Properties.getInt("graphics", "anti-aliasing");
-        if(antiAliasingLevel == null) {
-            antiAliasingLevel = 4; // Default to 4x MSAA
-            Properties.set("graphics", "anti_aliasing", antiAliasingLevel);
-            Log.writeln(Log.WARNING, "Anti-aliasing level not set in properties file. Defaulting to 4x MSAA.");
-        }
-        Log.writeln(Log.DEBUG, "Anti-aliasing level: " + antiAliasingLevel);
-        glfwWindowHint(GLFW_SAMPLES, antiAliasingLevel);
-
         // Create the window, primary for now until we can select a monitor
-        int monitorIndex = Properties.getInt("window", "monitor");
+        int monitorIndex = Properties.get("window", "monitor", 0);
         window = new Window(Monitors.getIndex(monitorIndex));
         //Set the window position to the center
         window.setCenter();
@@ -56,7 +46,9 @@ public class Engine {
         Mouse.attach(window);
 
 
-        // Initialize the renderer
+        // Initialize OpenGL context and renderer
+        glfwMakeContextCurrent(window.id()); // Make the window's context current
+        GL.createCapabilities(); // Initialize OpenGL capabilities
         GraphicsManager.init(window);
     }
 
@@ -69,6 +61,13 @@ public class Engine {
     public static void frameBegin() {
         // Poll for window events
         glfwPollEvents();
+    }
+    // Frame Loop Iteration: Clears the screen and depth buffer
+    public static void clearScreen(){ clearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);}
+    public static void clearScreen(int clearFlags) {
+        // Clear the screen and depth buffer (or not)
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // todo make this settable
+        glClear(clearFlags);
     }
     // Frame Loop Iteration: Ends the current frame, swaps buffers
     public static void frameEnd(){

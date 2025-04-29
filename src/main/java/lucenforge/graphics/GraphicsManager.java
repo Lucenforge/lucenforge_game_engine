@@ -1,19 +1,15 @@
 package lucenforge.graphics;
 
-import lucenforge.Engine;
 import lucenforge.files.FileTools;
 import lucenforge.files.Log;
-import lucenforge.files.Properties;
 import lucenforge.output.Window;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
-import org.lwjgl.opengl.GL;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL20.*;
 
 public class GraphicsManager {
@@ -26,13 +22,15 @@ public class GraphicsManager {
     // Initialize the renderer
     public static void init(Window window) {
 
-
-
         // Initialize OpenGL
-        glfwMakeContextCurrent(window.id()); // Make the window's context current
-        GL.createCapabilities(); // Initialize OpenGL capabilities
         glViewport(0, 0, window.width(), window.height());  // Set the viewport to half the window size
         glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (multisampling)
+        int samples = glGetInteger(GL_SAMPLES);
+        Log.writeln(Log.DEBUG, "Anti-aliasing enabled with " + samples + " samples per pixel.");
+
+        Log.writeln(Log.DEBUG, "Graphics: OpenGL version: " + glGetString(GL_VERSION));
+        Log.writeln(Log.DEBUG, "Graphics: Renderer: " + glGetString(GL_RENDERER));
+        Log.writeln(Log.DEBUG, "Graphics: Vendor: " + glGetString(GL_VENDOR));
 
         // Initialize shaders
         loadShaderFiles();
@@ -83,15 +81,16 @@ public class GraphicsManager {
     }
 
     // Convert pixel coordinates to normalized device coordinates
-    public static Vector2f pxToRaw(Vector2i p){
-        float x = ((float)p.x / Engine.getWindow().width()) * 2 - 1;
-        float y = ((float)p.y / Engine.getWindow().height()) * 2 - 1;
+    public static Vector2f pxToNDC(Vector2i p){
+        float x = ((float)p.x / Window.getDim().x) * 2 - 1;
+        float y = 1 - ((float)p.y / Window.getDim().y) * 2;
+//        float y = ((float)p.y / Engine.getWindow().height()) * 2 - 1;
         return new Vector2f(x, y);
     }
     // Convert pixel size to normalized device size todo: make square
-    public static float pxToRaw(float p){
-        float x = (p / Engine.getWindow().width()) * 2;
-        float y = (p / Engine.getWindow().height()) * 2;
+    public static float pxToNDC(int p){
+        float x = ((float) p / Window.getDim().x) * 2;
+        float y = ((float) p / Window.getDim().y) * 2;
         return (x + y)/2;
     }
 

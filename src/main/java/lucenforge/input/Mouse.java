@@ -1,7 +1,8 @@
 package lucenforge.input;
 
-import lucenforge.files.Log;
 import lucenforge.output.Window;
+import org.joml.Vector2d;
+import org.joml.Vector2i;
 
 import java.util.HashMap;
 
@@ -9,15 +10,15 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public class Mouse {
 
-    public static double xPos, yPos, scrollX, scrollY;
+    public static Vector2i pos; // Mouse position in pixels
+    public static Vector2d scroll;
     private static final HashMap<Integer, Boolean> buttonStatus = new HashMap<>();
 
     public static void attach(Window attachedWindow) {
 
         // Set the mouse position callback
-        glfwSetCursorPosCallback(attachedWindow.id(), (window, xpos, ypos) -> {
-            xPos = xpos;
-            yPos = ypos;
+        glfwSetCursorPosCallback(attachedWindow.id(), (window, x_pos, y_pos) -> {
+            pos = new Vector2i((int) x_pos, (int) y_pos);
         });
 
         // Set the mouse button callback
@@ -26,11 +27,13 @@ public class Mouse {
         });
 
         // Set the scroll callback
-        glfwSetScrollCallback(attachedWindow.id(), (window, xoffset, yoffset) -> {
-            scrollX = xoffset;
-            scrollY = yoffset;
+        glfwSetScrollCallback(attachedWindow.id(), (window, xOffset, yOffset) -> {
+            scroll = new Vector2d(xOffset, yOffset);
         });
+    }
 
+    public static Vector2i getPos() {
+        return pos != null ? pos : new Vector2i(0, 0);
     }
 
     public static boolean isButtonPressed(int button) {

@@ -1,7 +1,9 @@
 package lucenforge.output;
 
+import lucenforge.Engine;
 import lucenforge.files.Log;
 import lucenforge.files.Properties;
+import org.joml.Vector2i;
 import org.lwjgl.glfw.*;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.*;
@@ -20,20 +22,22 @@ public class Window {
     private int width, height;
 
     public Window(Monitor monitor) {
-        this.width = Properties.getInt("window", "resolution_x");
-        this.height = Properties.getInt("window", "resolution_y");
+        this.width = Properties.get("window", "resolution_x", 800);
+        this.height = Properties.get("window", "resolution_y", 600);
         this.monitor = monitor;
 
         //Set window properties
-        boolean isResizable = Properties.getBoolean("window", "resizable");
-        boolean isBorderless = Properties.getBoolean("window", "borderless");
+        boolean isResizable = Properties.get("window", "resizable", false);
+        boolean isBorderless = Properties.get("window", "borderless", false);
+        boolean isFullscreen = Properties.get("window", "fullscreen", false);
+        int antiAliasingLevel = Properties.get("graphics", "anti-aliasing", 4);
         glfwDefaultWindowHints(); // Configure GLFW
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); //Set initial visibility
         glfwWindowHint(GLFW_RESIZABLE, isResizable? GLFW_TRUE : GLFW_FALSE); //Set if the window is resizable
         glfwWindowHint(GLFW_DECORATED, isBorderless? GLFW_FALSE : GLFW_TRUE); //Set whether it has a frame or not (borderless key here)
+        glfwWindowHint(GLFW_SAMPLES, antiAliasingLevel);
 
-        String title = Properties.get("window", "title", String.class);
-        boolean isFullscreen = Properties.getBoolean("window", "fullscreen");
+        String title = Properties.get("window", "title","LucenForge Engine");
         windowID = glfwCreateWindow(width, height, title, isFullscreen? monitor.id() : NULL, NULL);
         if ( windowID == NULL )
             throw new RuntimeException("Failed to create the GLFW window");
@@ -62,6 +66,11 @@ public class Window {
     // Get the window's height
     public int height() {
         return height;
+    }
+    // Get the primary monitor's width and height
+    public static Vector2i getDim(){
+        return new Vector2i(Engine.getWindow().width(),
+                Engine.getWindow().height());
     }
 
     //Set the window's position to the center of the monitor

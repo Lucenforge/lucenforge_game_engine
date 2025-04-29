@@ -13,7 +13,7 @@ public class RenderLayer {
     // The shader programs to use for rendering
     private final HashMap<Shader, ArrayList<Mesh>> shaderBatches = new HashMap<>();
     // Lookup table for shaders
-    private static final HashMap<String, Shader> shaders = new HashMap<>();
+    private final HashMap<String, Shader> shaders = new HashMap<>();
 
     public RenderLayer(){
         GraphicsManager.registerRenderLayer(this);
@@ -21,9 +21,6 @@ public class RenderLayer {
 
     // Render Loop Iteration: Clears the screen and prepares for the next frame
     public void render() {
-        // Clear the screen and depth buffer (or not)
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // todo make this settable
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Enable blending
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

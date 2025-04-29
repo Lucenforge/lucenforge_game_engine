@@ -3,9 +3,6 @@ package lucenforge.files;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
 
 public class Log {
 
@@ -18,7 +15,7 @@ public class Log {
             // Ensure the log directory exists
             FileTools.createDirectory(logDirPath);
             // Get the number of logs allowed from properties
-            int maxLogs = Properties.getInt("logging", "max_logs");
+            int maxLogs = Properties.get("logging", "max_logs", 3);
             // If the number of files is greater than the max logs, delete the oldest log file
             FileTools.limitNumFilesInDir(logDirPath, maxLogs);
             // Create a new log file with the current timestamp
