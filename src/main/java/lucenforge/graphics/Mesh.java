@@ -229,9 +229,7 @@ public class Mesh {
                 }
             } else if (line.startsWith("f ")) {
                 String[] parts = line.replace("\r","").split(" ");
-                Log.writeln(Log.DEBUG, parts[0] + ", " + parts[1] + ", " + parts[2] + ", " + parts[3]);
                 if (parts.length == 4){
-                    Log.writeln("The split: " + parts[3].split("/")[0]);
                     //todo include texture and normal data later; This will change
                     int x = Integer.parseInt(parts[1].split("/")[0]) - 1;
                     int y = Integer.parseInt(parts[2].split("/")[0]) - 1;

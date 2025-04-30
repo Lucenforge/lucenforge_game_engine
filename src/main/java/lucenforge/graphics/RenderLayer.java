@@ -40,19 +40,22 @@ public class RenderLayer {
             ArrayList<Mesh> meshes = shaderBatches.get(shader);
             shader.bind();
             for (Mesh mesh : meshes) {
-                // Set the color uniform todo make this settable
-                Vector4f color = mesh.getColor();
-//                glUniform4f(flatColorID, color.x, color.y, color.z, color.w);
-
+//                // Set the color uniform todo make this settable
+//                Vector4f color = mesh.getColor();
+////                glUniform4f(flatColorID, color.x, color.y, color.z, color.w);
+//
                 Matrix4f model = new Matrix4f()
                         .identity()
                         .scale(0.75f); // Shrinks the mesh to fit inside NDC
-                // todo make this settable
+//                // todo make this settable
                 shader.setUniform("model", model);
                 shader.setUniform("lightDir", new Vector3f(0.5f, -1f, 0.3f).normalize());
                 shader.setUniform("baseColor", mesh.getColor());
 
-                mesh.render();
+                if(shader.checkUniformsSet())
+                    mesh.render();
+                else
+                    Log.writeln(Log.ERROR, "Uniforms not set for shader: " + shader.getName());
             }
             shader.unbind();
         }

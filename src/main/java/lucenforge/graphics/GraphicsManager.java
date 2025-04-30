@@ -50,7 +50,6 @@ public class GraphicsManager {
     public static Vector2f pxToNDC(Vector2i p){
         float x = ((float)p.x / Window.getDim().x) * 2 - 1;
         float y = 1 - ((float)p.y / Window.getDim().y) * 2;
-//        float y = ((float)p.y / Engine.getWindow().height()) * 2 - 1;
         return new Vector2f(x, y);
     }
     // Convert pixel size to normalized device size todo: make square

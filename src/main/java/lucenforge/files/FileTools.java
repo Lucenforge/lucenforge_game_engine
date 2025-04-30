@@ -113,7 +113,7 @@ public class FileTools {
             String vertFileContents = FileTools.readFile(vertFilePath);
             String fragFileContents = FileTools.readFile(fragFilePath);
             //Create the shader program
-            Shader shader = new Shader(vertFileContents, fragFileContents);
+            Shader shader = new Shader(vertFileName, vertFileContents, fragFileContents);
             //Load it into the shader lookup table
             shaders.put(vertFileName, shader);
             Log.writeln(Log.DEBUG, "Shader loaded: " + fragFileName);
