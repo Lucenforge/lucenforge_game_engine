@@ -9,7 +9,6 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.stream.Stream;
 
 public class FileTools {
 
@@ -132,7 +131,7 @@ public class FileTools {
             String modelName = objFile.getFileName().toString();
             modelName = modelName.substring(0, modelName.indexOf("."));
             Mesh mesh = new Mesh();
-            mesh.parse(readFile(objFile));
+            mesh.parseOBJ(readFile(objFile));
             models.put(modelName, mesh);
             Log.writeln("Model loaded: " + modelName + ", v=" + mesh.getNumVerts() + ", f="
                     + mesh.getNumFaces());
