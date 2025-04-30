@@ -1,6 +1,9 @@
 package lucenforge.graphics;
 
+import lucenforge.files.FileTools;
 import lucenforge.files.Log;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import java.util.ArrayList;
@@ -21,28 +24,43 @@ public class RenderLayer {
 
     // Render Loop Iteration: Clears the screen and prepares for the next frame
     public void render() {
-        // Enable blending
+        // Enable blending todo make these settable
         glEnable(GL_BLEND);
+        // Enable depth testing
+        glEnable(GL_DEPTH_TEST);
+        // Disable culling (for 2D rendering, we want to render all faces)
+//        glDisable(GL_CULL_FACE);
+
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         // Go through each shader and render the meshes
         for(Shader shader : shaderBatches.keySet()) {
             // Get the uniform for the color ID
-            int flatColorID = shader.getUniformID("flatColor");
+//            int flatColorID = shader.getUniformID("flatColor");
             // Get the meshes for this shader
             ArrayList<Mesh> meshes = shaderBatches.get(shader);
             shader.bind();
             for (Mesh mesh : meshes) {
-                // Set the color uniform
+                // Set the color uniform todo make this settable
                 Vector4f color = mesh.getColor();
-                glUniform4f(flatColorID, color.x, color.y, color.z, color.w);
+//                glUniform4f(flatColorID, color.x, color.y, color.z, color.w);
+
+                Matrix4f model = new Matrix4f()
+                        .identity()
+                        .scale(0.75f); // Shrinks the mesh to fit inside NDC
+                // todo make this settable
+                shader.setUniform("model", model);
+                shader.setUniform("lightDir", new Vector3f(0.5f, -1f, 0.3f).normalize());
+                shader.setUniform("baseColor", mesh.getColor());
+
                 mesh.render();
             }
             shader.unbind();
         }
     }
 
-    public void add(String meshName, String shaderName){
-
+    public void add(String meshName, Mesh.Usage usage, String shaderName){
+        Mesh mesh = FileTools.getMeshFile(meshName, usage);
+        add(mesh, shaderName);
     }
 
     // Adds a mesh to the render batch for the given shader

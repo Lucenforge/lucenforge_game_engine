@@ -1,6 +1,7 @@
 package lucenforge.graphics;
 
 import lucenforge.files.Log;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 import org.joml.Vector4f;
@@ -26,10 +27,12 @@ public class Mesh {
     private int vao; // Vertex Array Object
     private int vbo; // Vertex Buffer Object
     private int ebo; // Element Buffer Object
+    private int eboLength;
 
     private Vector3f[] normals;
     private Vector3f[] vertices;
     private Vector3i[] indices;
+    private Usage usage;
 
     private final Vector4f color = new Vector4f(1f, 0f, 1f, 1f);
 
@@ -46,6 +49,8 @@ public class Mesh {
         return init(usage);
     }
     public Mesh init(Usage usage) {
+        this.usage = usage;
+
         // Generate VAO, VBO, and EBO
         vao = glGenVertexArrays();
         vbo = glGenBuffers();
@@ -56,27 +61,36 @@ public class Mesh {
         // Vertex buffer
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         // Allocate buffer space
-        glBufferData(GL_ARRAY_BUFFER, (long) vertices.length * Float.BYTES, usage.glID);
+        int stride = normals != null? 6 : 3; // 3 floats per vertex, 3 for normals
+        glBufferData(GL_ARRAY_BUFFER, (long) vertices.length * stride * Float.BYTES, usage.glID);
         // If usage is STREAM, use mapped buffer
-        ByteBuffer mapBuffer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-        if (mapBuffer == null) {
-            Log.writeln(Log.ERROR, "Failed to map buffer!");
+        if (usage == Usage.STREAM) {
+            ByteBuffer mapBuffer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+            if (mapBuffer == null) {
+                Log.writeln(Log.ERROR, "Failed to map buffer!");
+            } else {
+                mappedBuffer = mapBuffer.asFloatBuffer();
+                mappedBuffer.put(compileVBO()).flip();
+                glUnmapBuffer(GL_ARRAY_BUFFER);
+                mappedBuffer = null;
+            }
         } else {
-            // If usage is not STREAM, Map the buffer to a FloatBuffer
-            mappedBuffer = mapBuffer.asFloatBuffer();
-            mappedBuffer.put(compileVBO()).flip();
-            glUnmapBuffer(GL_ARRAY_BUFFER); // <--- This is key!
-            mappedBuffer = null;
+            glBufferSubData(GL_ARRAY_BUFFER, 0, compileVBO());
         }
+
 
         // Element buffer
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, compileEBO(), GL_STATIC_DRAW);
 
         // Vertex attribute pointer (position only)
-        int stride = normals != null? 6 : 3; // 3 floats per vertex, 3 for normals
-        glVertexAttribPointer(0, stride, GL_FLOAT, false, stride * Float.BYTES, 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, stride * Float.BYTES, 0);
         glEnableVertexAttribArray(0);
+        // Vertex attribute pointer (normals)
+        if (normals != null) {
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, stride * Float.BYTES, 3 * Float.BYTES);
+            glEnableVertexAttribArray(1);
+        }
 
         // Unbind VBO (safe), but DO NOT unbind EBO while VAO is still bound
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -86,19 +100,27 @@ public class Mesh {
     }
 
     public void updateVerts(Vector3f[] vertices) {
+        if (vbo == 0 || vertices == null) {
+            Log.writeln(Log.ERROR, "updateVerts called before init!");
+            return;
+        }
         // Update the vertex data
         this.vertices = vertices;
         // Recompile the VBO
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         // If usage is STREAM, use mapped buffer
-        ByteBuffer mapBuffer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-        if (mapBuffer == null) {
-            Log.writeln(Log.ERROR, "Failed to remap buffer during update!");
+        if (usage == Usage.STREAM) {
+            ByteBuffer mapBuffer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+            if (mapBuffer == null) {
+                Log.writeln(Log.ERROR, "Failed to map buffer!");
+            } else {
+                mappedBuffer = mapBuffer.asFloatBuffer();
+                mappedBuffer.put(compileVBO()).flip();
+                glUnmapBuffer(GL_ARRAY_BUFFER);
+                mappedBuffer = null;
+            }
         } else {
-            mappedBuffer = mapBuffer.asFloatBuffer();
-            mappedBuffer.put(compileVBO()).flip();
-            glUnmapBuffer(GL_ARRAY_BUFFER);
-            mappedBuffer = null;
+            glBufferSubData(GL_ARRAY_BUFFER, 0, compileVBO());
         }
 
         // Unbind the buffer
@@ -110,8 +132,9 @@ public class Mesh {
             Log.writeln(Log.ERROR, "Mesh not initialized; Cannot render!");
             return;
         }
+
         glBindVertexArray(vao);
-        glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, eboLength, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
     }
 
@@ -121,15 +144,14 @@ public class Mesh {
         float[] vertexBuffer = new float[vertices.length * stride];
         // For every vertex, add the position and normal (if present) to the buffer
         for (int i = 0; i < vertices.length; i++) {
-            // Add vertex position to the buffer
-            vertexBuffer[i * 3    ] = vertices[i].x;
-            vertexBuffer[i * 3 + 1] = vertices[i].y;
-            vertexBuffer[i * 3 + 2] = vertices[i].z;
-            // If normals are present, add them to the buffer
+            int base = i * stride;
+            vertexBuffer[base]     = vertices[i].x;
+            vertexBuffer[base + 1] = vertices[i].y;
+            vertexBuffer[base + 2] = vertices[i].z;
             if (normals != null) {
-                vertexBuffer[i * 6 + 3] = normals[i].x;
-                vertexBuffer[i * 6 + 4] = normals[i].y;
-                vertexBuffer[i * 6 + 5] = normals[i].z;
+                vertexBuffer[base + 3] = normals[i].x;
+                vertexBuffer[base + 4] = normals[i].y;
+                vertexBuffer[base + 5] = normals[i].z;
             }
         }
         return vertexBuffer;
@@ -144,8 +166,49 @@ public class Mesh {
             indexBuffer[i * 3 + 1] = indices[i].y;
             indexBuffer[i * 3 + 2] = indices[i].z;
         }
+        eboLength = indexBuffer.length;
         return indexBuffer;
     }
+
+    // Compute normals for the mesh todo check as this might not fully be correct, though that could be the shader
+    public void computeNormals(boolean smooth) {
+        if (normals != null) {
+            Log.writeln(Log.WARNING, "Normals already computed, overwriting");
+        }
+
+        normals = new Vector3f[vertices.length];
+        for (int i = 0; i < normals.length; i++) {
+            normals[i] = new Vector3f();
+        }
+
+        for (Vector3i face : indices) {
+            Vector3f v1 = vertices[face.x];
+            Vector3f v2 = vertices[face.y];
+            Vector3f v3 = vertices[face.z];
+
+            Vector3f edge1 = v2.sub(v1, new Vector3f());
+            Vector3f edge2 = v3.sub(v1, new Vector3f());
+
+            Vector3f normal = edge1.cross(edge2).normalize();
+
+            if (smooth) {
+                normals[face.x].add(normal);
+                normals[face.y].add(normal);
+                normals[face.z].add(normal);
+            } else {
+                normals[face.x] = new Vector3f(normal);
+                normals[face.y] = new Vector3f(normal);
+                normals[face.z] = new Vector3f(normal);
+            }
+        }
+
+        if (smooth) {
+            for (Vector3f n : normals) {
+                n.normalize();
+            }
+        }
+    }
+
 
     // Parse mesh data from an obj string
     // Only supports simple v and f right now, no normals or textures
@@ -167,7 +230,6 @@ public class Mesh {
             } else if (line.startsWith("f ")) {
                 String[] parts = line.replace("\n","").split(" ");
                 if (parts.length == 4){
-                    Log.writeln(parts[3]);
                     int x = Integer.parseInt(parts[1]) - 1; // OBJ indices are 1-based
                     int y = Integer.parseInt(parts[2]) - 1;
                     int z = Integer.parseInt(parts[3]) - 1;
@@ -185,6 +247,7 @@ public class Mesh {
         for (int i = 0; i < indexList.size(); i++) {
             indices[i] = indexList.get(i);
         }
+        computeNormals(false);
     }
 
     // Cleanup method
@@ -214,9 +277,9 @@ public class Mesh {
 
     // Getters for vertices and indices
     public int getNumVerts(){
-        return vertices.length / 3; // Each vertex has 3 components (x, y, z)
+        return vertices.length; // Each vertex has 3 components (x, y, z)
     }
     public int getNumFaces(){
-        return indices.length / 3; // Each face is a triangle, so 3 indices per face
+        return indices.length; // Each face is a triangle, so 3 indices per face
     }
 }

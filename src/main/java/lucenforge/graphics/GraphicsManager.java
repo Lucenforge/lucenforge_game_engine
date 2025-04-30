@@ -26,8 +26,6 @@ public class GraphicsManager {
         // Initialize OpenGL
         glViewport(0, 0, window.width(), window.height());  // Set the viewport to half the window size
         glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (multisampling)
-        int samples = glGetInteger(GL_SAMPLES);
-        Log.writeln(Log.DEBUG, "Anti-aliasing enabled with " + samples + " samples per pixel.");
 
         Log.writeln(Log.DEBUG, "Graphics: OpenGL version: " + glGetString(GL_VERSION));
         Log.writeln(Log.DEBUG, "Graphics: Renderer: " + glGetString(GL_RENDERER));
@@ -69,15 +67,6 @@ public class GraphicsManager {
         }
         renderLayers.clear();
         Log.writeln(Log.DEBUG, "All render layers cleaned up.");
-    }
-
-    public static Mesh getMeshFile(String name, Mesh.Usage usage) {
-        if (masterMeshes.containsKey(name)) {
-            return masterMeshes.get(name).init(usage);
-        } else {
-            Log.writeln(Log.ERROR, "Mesh not found: " + name);
-            return null;
-        }
     }
 
     private GraphicsManager(){} // Prevent instantiation

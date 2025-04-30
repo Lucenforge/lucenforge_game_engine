@@ -1,5 +1,6 @@
 package lucenforge.files;
 
+import lucenforge.graphics.GraphicsManager;
 import lucenforge.graphics.Mesh;
 import lucenforge.graphics.Shader;
 
@@ -137,6 +138,16 @@ public class FileTools {
                     + mesh.getNumFaces());
         }
         return models;
+    }
+
+
+    public static Mesh getMeshFile(String name, Mesh.Usage usage) {
+        if (GraphicsManager.masterMeshes.containsKey(name)) {
+            return GraphicsManager.masterMeshes.get(name).init(usage);
+        } else {
+            Log.writeln(Log.ERROR, "Mesh not found: " + name);
+            return null;
+        }
     }
 
 

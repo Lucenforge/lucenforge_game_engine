@@ -1,5 +1,11 @@
 package lucenforge.graphics;
 
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
+import org.lwjgl.system.MemoryStack;
+
+import java.nio.FloatBuffer;
 import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL20.*;
@@ -47,6 +53,24 @@ public class Shader {
         }
         return id;
     }
+
+    public void setUniform(String name, Matrix4f matrix) {
+        int location = glGetUniformLocation(programId, name);
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            FloatBuffer fb = stack.mallocFloat(16);
+            matrix.get(fb);
+            glUniformMatrix4fv(location, false, fb);
+        }
+    }
+    public void setUniform(String name, Vector3f v) {
+        int location = glGetUniformLocation(programId, name);
+        glUniform3f(location, v.x, v.y, v.z);
+    }
+    public void setUniform(String name, Vector4f v) {
+        int location = glGetUniformLocation(programId, name);
+        glUniform4f(location, v.x, v.y, v.z, v.w);
+    }
+
 
     public void bind() {
         glUseProgram(programId);
