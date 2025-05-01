@@ -24,12 +24,11 @@ public class GraphicsManager {
     public static void init(Window window) {
 
         // Initialize OpenGL
-        glViewport(0, 0, window.width(), window.height());  // Set the viewport to half the window size
+        glViewport(0, 0, window.width(), window.height());  // Set the viewport to the window size
         glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (multisampling)
 
-        Log.writeln(Log.DEBUG, "Graphics: OpenGL version: " + glGetString(GL_VERSION));
-        Log.writeln(Log.DEBUG, "Graphics: Renderer: " + glGetString(GL_RENDERER));
-        Log.writeln(Log.DEBUG, "Graphics: Vendor: " + glGetString(GL_VENDOR));
+        Log.writeln(Log.SYSTEM, "Graphics: OpenGL version: " + glGetString(GL_VERSION));
+        Log.writeln(Log.SYSTEM, "Graphics: Renderer: " + glGetString(GL_RENDERER) + ", Vendor: " + glGetString(GL_VENDOR));
 
         // Load shaders and meshes
         masterShaders = FileTools.loadShaderFiles();
@@ -43,7 +42,6 @@ public class GraphicsManager {
             return;
         }
         renderLayers.add(layer);
-        Log.writeln(Log.DEBUG, "Render layer registered: " + layer.getClass().getSimpleName());
     }
 
     // Convert pixel coordinates to normalized device coordinates
@@ -65,7 +63,6 @@ public class GraphicsManager {
             layer.cleanup();
         }
         renderLayers.clear();
-        Log.writeln(Log.DEBUG, "All render layers cleaned up.");
     }
 
     private GraphicsManager(){} // Prevent instantiation

@@ -29,17 +29,18 @@ public class Mesh {
     private int ebo; // Element Buffer Object
     private int eboLength;
 
-    private Vector3f[] normals;
+    public Vector3f[] normals; //todo make private!
     private Vector3f[] vertices;
     private Vector3i[] indices;
     private Usage usage;
+    private Shader shader;
 
     private final Vector4f color = new Vector4f(1f, 0f, 1f, 1f);
 
     FloatBuffer mappedBuffer = null;
 
     public Mesh init(Vector3f[] vertices, Vector3i[] indices, Usage usage) {
-        init(vertices, indices, null, usage);
+        init(vertices, indices, normals, usage);
         return init(usage);
     }
     public Mesh init(Vector3f[] vertices, Vector3i[] indices, Vector3f[] normals, Usage usage) {
@@ -274,6 +275,19 @@ public class Mesh {
     }
     public Vector4f getColor() {
         return color;
+    }
+    public void setShader(String shaderName){
+        if (GraphicsManager.masterShaders.containsKey(shaderName)) {
+            shader = GraphicsManager.masterShaders.get(shaderName);
+        } else {
+            Log.writeln(Log.ERROR, "Shader not found in master lookup: " + shaderName);
+        }
+    }
+    public void setShader(Shader shader){
+        this.shader = shader;
+    }
+    public Shader shader(){
+        return shader;
     }
 
     // Getters for vertices and indices

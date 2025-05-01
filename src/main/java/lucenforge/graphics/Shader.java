@@ -1,20 +1,15 @@
 package lucenforge.graphics;
 
 import lucenforge.files.Log;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
-import org.lwjgl.system.MemoryStack;
 
-import java.nio.FloatBuffer;
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL20.*;
 
 public class Shader {
     private final String name;
     private final int programId;
-    private final ArrayList<String> reqUniforms = new ArrayList<>();
+    private final HashMap<String, ShaderParameter> reqUniforms = new HashMap<>();
 
     public Shader(String name, String vertexSrc, String fragmentSrc) {
         this.name = name;
@@ -46,34 +41,15 @@ public class Shader {
         return shader;
     }
 
-    public boolean checkUniformsSet() {
-        boolean allSet = true;
-        for(String uniform : reqUniforms) {
-            int id = glGetUniformLocation(programId, uniform);
-            if (id == -1) {
-                Log.writeln(Log.ERROR, "Uniform not set: " + uniform);
-                allSet = false;
+    public boolean checkThatUniformsAreSet() {
+        boolean allGood = true;
+        for (ShaderParameter shaderParameter : reqUniforms.values()) {
+            if (!shaderParameter.isSet()) {
+                Log.writeln(Log.ERROR, "Uniform " + shaderParameter.name() + " not set in shader " + name);
+                allGood = false;
             }
         }
-        return allSet;
-    }
-
-    // Set uniforms
-    public void setUniform(String name, Matrix4f matrix) {
-        int location = glGetUniformLocation(programId, name);
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            FloatBuffer fb = stack.mallocFloat(16);
-            matrix.get(fb);
-            glUniformMatrix4fv(location, false, fb);
-        }
-    }
-    public void setUniform(String name, Vector3f v) {
-        int location = glGetUniformLocation(programId, name);
-        glUniform3f(location, v.x, v.y, v.z);
-    }
-    public void setUniform(String name, Vector4f v) {
-        int location = glGetUniformLocation(programId, name);
-        glUniform4f(location, v.x, v.y, v.z, v.w);
+        return allGood;
     }
 
     // find required uniforms
@@ -84,12 +60,18 @@ public class Shader {
             line = line.trim();
             if (line.startsWith("uniform")) {
                 String[] parts = line.split(" ");
-                if (parts.length > 2) {
+                if (parts.length == 3) {
+                    String type = parts[1];
                     String uniformName = parts[2].replace(";", "");
-                    reqUniforms.add(uniformName);
+                    ShaderParameter shaderParameter = new ShaderParameter(uniformName, type, this);
+                    reqUniforms.put(uniformName, shaderParameter);
                 }
             }
         }
+    }
+
+    public ShaderParameter parameter(String name) {
+        return reqUniforms.get(name);
     }
 
     public void bind() {
@@ -108,7 +90,7 @@ public class Shader {
         glDeleteProgram(programId);
     }
 
-    public String getName() {
+    public String name() {
         return name;
     }
 }

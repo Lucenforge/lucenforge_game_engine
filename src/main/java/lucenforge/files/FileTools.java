@@ -98,6 +98,7 @@ public class FileTools {
         ArrayList<Path> fragFiles = FileTools.getFilesInDir("src/main/resources/shaders", ".frag.glsl");
         assert(vertFiles.size() == fragFiles.size()) : "Number of vertex and fragment shaders do not match!";
         //Check that the vertex and fragment shader names match
+        Log.write(Log.SYSTEM, "Shaders loaded: ");
         for(int i = 0; i < vertFiles.size(); i++){
             String vertFilePath = vertFiles.get(i).toString();
             String fragFilePath = fragFiles.get(i).toString();
@@ -116,8 +117,9 @@ public class FileTools {
             Shader shader = new Shader(vertFileName, vertFileContents, fragFileContents);
             //Load it into the shader lookup table
             shaders.put(vertFileName, shader);
-            Log.writeln(Log.DEBUG, "Shader loaded: " + fragFileName);
+            Log.write(Log.SYSTEM, " " + fragFileName + ",");
         }
+        Log.writeln("");
         return shaders;
     }
 
@@ -128,15 +130,17 @@ public class FileTools {
         createDirectory("src/main/resources/models");
         //Get list of all files in the models directory with the extension .obj
         ArrayList<Path> objFiles = getFilesInDir("src/main/resources/models", ".obj");
+        Log.write(Log.SYSTEM, "Models loaded: ");
         for(Path objFile : objFiles) {
             String modelName = objFile.getFileName().toString();
             modelName = modelName.substring(0, modelName.indexOf("."));
             Mesh mesh = new Mesh();
             mesh.parseOBJ(readFile(objFile));
             models.put(modelName, mesh);
-            Log.writeln("Model loaded: " + modelName + ", v=" + mesh.getNumVerts() + ", f="
-                    + mesh.getNumFaces());
+            Log.write(Log.SYSTEM, " (" + modelName + ", v=" + mesh.getNumVerts() + ", f="
+                    + mesh.getNumFaces() + "), ");
         }
+        Log.writeln("");
         return models;
     }
 
