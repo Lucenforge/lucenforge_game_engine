@@ -9,6 +9,7 @@ import org.joml.Vector4f;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.ARBVertexArrayObject.*;
@@ -34,8 +35,7 @@ public class Mesh {
     private Vector3i[] indices;
     private Usage usage;
     private Shader shader;
-
-    private final Vector4f color = new Vector4f(1f, 0f, 1f, 1f);
+    private HashMap<String, ShaderParameter> params = new HashMap<>();
 
     FloatBuffer mappedBuffer = null;
 
@@ -126,6 +126,13 @@ public class Mesh {
 
         // Unbind the buffer
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    public void pushParamsToShader(){
+        //Push uniforms (parameters)
+        for(ShaderParameter param : params.values()){
+            param.pushToShader();
+        }
     }
 
     public void render() {
@@ -263,18 +270,25 @@ public class Mesh {
         glDeleteBuffers(ebo);
     }
 
-    // Setters and Getters for Color
-    public void setColor(int r, int g, int b){
-        color.set(r / 255f, g / 255f, b / 255f, color.w);
-    }
-    public void setColor(float r, float g, float b, float a) {
-        color.set(r, g, b, a);
-    }
-    public void setColor(int r, int g, int b, int a) {
-        color.set(r / 255f, g / 255f, b / 255f, a / 255f);
-    }
-    public Vector4f getColor() {
-        return color;
+    // Shader setters and getters
+    public <T> void setParam(String paramName, T value){
+        if (!params.containsKey(paramName)) {
+            ShaderParameter paramFromShader = shader.getParam(paramName);
+            if(paramFromShader == null) { //Warning shows up in the function above
+                return;
+            }
+            params.put(paramName, new ShaderParameter(paramFromShader));
+        }
+        ShaderParameter parameter = params.get(paramName);
+        if(value instanceof Matrix4f)
+            parameter.set((Matrix4f) value);
+        else if(value instanceof Vector3f)
+            parameter.set((Vector3f) value);
+        else if(value instanceof Vector4f)
+            parameter.set((Vector4f) value);
+        else{
+            Log.writeln(Log.ERROR, "Type needs to be added to ShaderParameter class: "+value);
+        }
     }
     public void setShader(String shaderName){
         if (GraphicsManager.masterShaders.containsKey(shaderName)) {

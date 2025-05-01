@@ -60,19 +60,22 @@ public class Engine {
     }
 
     // Frame Loop Iteration: Begins a new frame, polls for events
-    public static void frameBegin() {
+    public static void frameBegin(){frameBegin(true);}
+    public static void frameBegin(boolean shouldClearScreen) {
+        if(shouldClearScreen)
+            clearScreen();
         // Poll for window events
         glfwPollEvents();
     }
     // Frame Loop Iteration: Clears the screen and depth buffer
-    public static void clearScreen(){ clearScreen(
-            GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
-            new Vector4f(0.1f, 0.1f, 0.1f, 1.0f));
+    public static void clearScreen(){
+        glClear(GL_COLOR_BUFFER_BIT);
     }
-    public static void clearScreen(int clearFlags, Vector4f color) {
-        // Clear the screen and depth buffer (or not)
+    public static void clearDepthBuffer(){
+        glClear(GL_DEPTH_BUFFER_BIT);
+    }
+    public static void setBackgroundColor(Vector4f color){
         glClearColor(color.x, color.y, color.z, color.w);
-        glClear(clearFlags);
     }
     // Frame Loop Iteration: Ends the current frame, swaps buffers
     public static void frameEnd(){

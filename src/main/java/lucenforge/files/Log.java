@@ -44,6 +44,10 @@ public class Log {
     public static void write(String logType, Object message) {
         checkInit();
         System.out.print(logType);
+        if(logType.equals(ERROR))
+            message = "ERROR: " + message;
+        else if(logType.equals(WARNING))
+            message = "WARNING: " + message;
         System.out.print(message);
         sendToLogFile(message.toString());
     }

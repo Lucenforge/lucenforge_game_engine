@@ -1,10 +1,7 @@
 package lucenforge.graphics;
 
-import lucenforge.files.FileTools;
+import lucenforge.Engine;
 import lucenforge.files.Log;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,13 +47,16 @@ public class RenderLayer {
 
 
     // Render Loop Iteration: Clears the screen and prepares for the next frame
-    public void render() {
+    public void render(){render(true);}
+    public void render(boolean clearDepth) {
+        if(clearDepth)
+            Engine.clearDepthBuffer();
         // Enable blending todo make these settable
         glEnable(GL_BLEND);
         // Enable depth testing
         glEnable(GL_DEPTH_TEST);
         // Disable culling (for 2D rendering, we want to render all faces)
-        glDisable(GL_CULL_FACE);
+//        glDisable(GL_CULL_FACE);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         // Go through each shader and render the meshes
@@ -65,8 +65,8 @@ public class RenderLayer {
             ArrayList<Mesh> meshes = shaderBatches.get(shader);
             shader.bind();
             for (Mesh mesh : meshes) {
-//                // Set the color uniform todo make this settable
-                if(shader.checkThatUniformsAreSet()) {
+                mesh.pushParamsToShader();
+                if(shader.areParametersSet()) {
                     mesh.render();
                 }else{
                     Log.writeln(Log.ERROR, "Shader " + shader.name() + " has not set all required uniforms!");

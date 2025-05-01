@@ -41,10 +41,12 @@ public class Shader {
         return shader;
     }
 
-    public boolean checkThatUniformsAreSet() {
+    public boolean areParametersSet() {
         boolean allGood = true;
         for (ShaderParameter shaderParameter : reqUniforms.values()) {
-            if (!shaderParameter.isSet()) {
+            if (shaderParameter.isSet()) {
+                shaderParameter.pushToOpenGL();
+            }else{
                 Log.writeln(Log.ERROR, "Uniform " + shaderParameter.name() + " not set in shader " + name);
                 allGood = false;
             }
@@ -70,10 +72,6 @@ public class Shader {
         }
     }
 
-    public ShaderParameter parameter(String name) {
-        return reqUniforms.get(name);
-    }
-
     public void bind() {
         glUseProgram(programId);
     }
@@ -92,5 +90,14 @@ public class Shader {
 
     public String name() {
         return name;
+    }
+
+    public ShaderParameter getParam(String name){
+        if(reqUniforms.containsKey(name))
+            return reqUniforms.get(name);
+        else{
+            Log.writeln(Log.ERROR, name + " is not a required parameter for shader " + this.name);
+            return null;
+        }
     }
 }
