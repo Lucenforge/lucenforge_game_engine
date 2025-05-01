@@ -7,8 +7,11 @@ import java.util.HashMap;
 import static org.lwjgl.opengl.GL20.*;
 
 public class Shader {
+    //The shader's name
     private final String name;
+    // The OpenGL program ID
     private final int programId;
+    // A list of required uniforms (parameters) that are needed for this shader
     private final HashMap<String, ShaderParameter> reqUniforms = new HashMap<>();
 
     public Shader(String name, String vertexSrc, String fragmentSrc) {

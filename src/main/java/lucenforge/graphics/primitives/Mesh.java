@@ -133,6 +133,7 @@ public class Mesh implements Renderable {
     }
 
     public void pushParamsToShader(){
+        setParam("");
         //Push uniforms (parameters)
         for(ShaderParameter param : params.values()){
             param.pushToShader();

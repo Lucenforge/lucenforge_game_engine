@@ -18,6 +18,8 @@ public class RenderLayer implements Renderable{
     // List of renderables that don't have an associated shader
     private final ArrayList<Renderable> shaderlessRenderables = new ArrayList<>();
 
+    private Camera camera;
+
     public RenderLayer(){
         GraphicsManager.registerRenderLayer(this);
     }
@@ -52,6 +54,10 @@ public class RenderLayer implements Renderable{
         shaderlessRenderables.add(renderable);
     }
 
+    // Sets the camera for this render layer
+    public void setCamera(Camera camera) {
+        this.camera = camera;
+    }
 
     // Render Loop Iteration: Clears the screen and prepares for the next frame
     public void render(){render(true);}
@@ -79,6 +85,10 @@ public class RenderLayer implements Renderable{
             ArrayList<Mesh> meshes = shaderMeshBatches.get(shader);
             shader.bind();
             for (Mesh mesh : meshes) {
+
+                mesh.setParam("projectionMatrix", camera.getProjectionMatrix());
+                mesh.setParam("viewMatrix", camera.getViewMatrix());
+
                 mesh.pushParamsToShader();
                 if(shader.areParametersSet()) {
                     mesh.render();
