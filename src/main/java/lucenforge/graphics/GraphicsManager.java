@@ -2,9 +2,11 @@ package lucenforge.graphics;
 
 import lucenforge.files.FileTools;
 import lucenforge.files.Log;
+import lucenforge.graphics.primitives.Mesh;
 import lucenforge.output.Window;
-import org.joml.Vector2f;
 import org.joml.Vector2i;
+import org.joml.Vector3f;
+import org.joml.Vector3i;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,10 +47,14 @@ public class GraphicsManager {
     }
 
     // Convert pixel coordinates to normalized device coordinates
-    public static Vector2f pxToNDC(Vector2i p){
-        float x = ((float)p.x / Window.getDim().x) * 2 - 1;
-        float y = 1 - ((float)p.y / Window.getDim().y) * 2;
-        return new Vector2f(x, y);
+    public static Vector3f pxToNDC(Vector2i p){
+        return pxToNDC(new Vector3i(p.x, p.y, 0));
+    }
+    public static Vector3f pxToNDC(Vector3i p){
+        float x = ((float) p.x / Window.getDim().x) * 2 - 1;
+        float y = 1 - ((float) p.y / Window.getDim().y) * 2;
+        float z = pxToNDC(p.z);
+        return new Vector3f(x, y, z);
     }
     // Convert pixel size to normalized device size todo: make square
     public static float pxToNDC(int p){

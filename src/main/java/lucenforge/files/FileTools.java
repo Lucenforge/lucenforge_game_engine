@@ -1,7 +1,7 @@
 package lucenforge.files;
 
 import lucenforge.graphics.GraphicsManager;
-import lucenforge.graphics.Mesh;
+import lucenforge.graphics.primitives.Mesh;
 import lucenforge.graphics.Shader;
 
 import java.io.IOException;

@@ -1,19 +1,17 @@
 package lucenforge.graphics.primitives;
 
-import lucenforge.graphics.Mesh;
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 public class FlatQuadrilateral extends Mesh {
 
-    public void init(Vector2f p1, Vector2f p2, Vector2f p3, Vector2f p4, Usage usage){
+    public void init(Vector3f p1, Vector3f p2, Vector3f p3, Vector3f p4, Usage usage){
         // Define the vertices of the quadrilateral
         Vector3f[] verts = {
-                new Vector3f(p1.x, p1.y, 0.0f),
-                new Vector3f(p2.x, p2.y, 0.0f),
-                new Vector3f(p3.x, p3.y, 0.0f),
-                new Vector3f(p4.x, p4.y, 0.0f)
+                new Vector3f(p1.x, p1.y, p1.z),
+                new Vector3f(p2.x, p2.y, p2.z),
+                new Vector3f(p3.x, p3.y, p3.z),
+                new Vector3f(p4.x, p4.y, p4.z)
         };
         // Define the indices for the two triangles that make up the quadrilateral
         Vector3i[] indices = {
@@ -23,13 +21,13 @@ public class FlatQuadrilateral extends Mesh {
         super.init(verts, indices, usage);
     }
 
-    public void update(Vector2f p1, Vector2f p2, Vector2f p3, Vector2f p4) {
+    public void update(Vector3f p1, Vector3f p2, Vector3f p3, Vector3f p4) {
         // Update the vertices of the quadrilateral
         Vector3f[] verts = {
-                new Vector3f(p1.x, p1.y, 0.0f),
-                new Vector3f(p2.x, p2.y, 0.0f),
-                new Vector3f(p3.x, p3.y, 0.0f),
-                new Vector3f(p4.x, p4.y, 0.0f)
+                new Vector3f(p1.x, p1.y, p1.z),
+                new Vector3f(p2.x, p2.y, p2.z),
+                new Vector3f(p3.x, p3.y, p3.z),
+                new Vector3f(p4.x, p4.y, p4.z)
         };
         // Update the vertex buffer with the new vertices
         super.updateVerts(verts);

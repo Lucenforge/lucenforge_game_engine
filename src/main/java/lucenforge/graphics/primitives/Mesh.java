@@ -1,6 +1,10 @@
-package lucenforge.graphics;
+package lucenforge.graphics.primitives;
 
 import lucenforge.files.Log;
+import lucenforge.graphics.GraphicsManager;
+import lucenforge.graphics.Renderable;
+import lucenforge.graphics.Shader;
+import lucenforge.graphics.ShaderParameter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -14,7 +18,7 @@ import java.util.HashMap;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.ARBVertexArrayObject.*;
 
-public class Mesh {
+public class Mesh implements Renderable {
 
     public enum Usage {
         STATIC (GL_STATIC_DRAW ),
@@ -305,6 +309,12 @@ public class Mesh {
     }
 
     // Getters for vertices and indices
+    public Vector3f[] getVertices(){
+        return vertices;
+    }
+    public Vector3i[] getIndices(){
+        return indices;
+    }
     public int getNumVerts(){
         return vertices.length; // Each vertex has 3 components (x, y, z)
     }
