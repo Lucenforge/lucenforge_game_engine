@@ -49,7 +49,7 @@ public class Properties {
     public static void set(String section, String key, Object value) {
         checkInit();
         // Check if the section exists
-        Object current = get(section, key, value.getClass(), null);
+        Object current = ini.get(section, key, value.getClass());
         if (current != null && current.equals(value))
             return;
 

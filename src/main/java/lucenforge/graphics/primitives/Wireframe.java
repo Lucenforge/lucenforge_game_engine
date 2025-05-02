@@ -13,19 +13,13 @@ public class Wireframe extends MeshGroup {
         Vector3i[] indexes = target.getIndices();
         for(Vector3i index : indexes){
             Line line1 = new Line();
-            line1.init(verts[index.x], verts[index.y], width, usage);
-            line1.init(verts[index.y], verts[index.z], width, usage);
-            line1.init(verts[index.z], verts[index.x], width, usage);
-            addMesh(line1);
             Line line2 = new Line();
-            line2.init(verts[index.x], verts[index.y], width, usage);
-            line2.init(verts[index.y], verts[index.z], width, usage);
-            line2.init(verts[index.z], verts[index.x], width, usage);
-            addMesh(line2);
             Line line3 = new Line();
-            line3.init(verts[index.x], verts[index.y], width, usage);
-            line3.init(verts[index.y], verts[index.z], width, usage);
+            line1.init(verts[index.x], verts[index.y], width, usage);
+            line2.init(verts[index.y], verts[index.z], width, usage);
             line3.init(verts[index.z], verts[index.x], width, usage);
+            addMesh(line1);
+            addMesh(line2);
             addMesh(line3);
         }
     }

@@ -6,7 +6,8 @@ import java.io.IOException;
 
 public class Log {
 
-    static BufferedWriter writer;
+    private static BufferedWriter writer;
+    private static String lastLine = "";
 
     public static void checkInit(){
         if(writer != null) return;
@@ -44,12 +45,19 @@ public class Log {
     public static void write(String logType, Object message) {
         checkInit();
         System.out.print(logType);
+
         if(logType.equals(ERROR))
             message = "ERROR: " + message;
         else if(logType.equals(WARNING))
             message = "WARNING: " + message;
+
+        if(message.toString().equals(lastLine))
+            return; // Don't log the same message twice
+
         System.out.print(message);
         sendToLogFile(message.toString());
+
+        lastLine = message.toString();
     }
 
     // Write into log (with new-line)
@@ -57,8 +65,7 @@ public class Log {
         writeln(EVENT, message);
     }
     public static void writeln(String logType, Object message) {
-        write(logType, message);
-        write("\n");
+        write(logType, message + "\n");
     }
 
     private static void sendToLogFile(String line){

@@ -29,10 +29,12 @@ public class Window {
         //Set window properties
         boolean isResizable = Properties.get("window", "resizable", false);
         boolean isBorderless = Properties.get("window", "borderless", false);
+        boolean isMaximized = Properties.get("window", "maximized", true);
         boolean isFullscreen = Properties.get("window", "fullscreen", false);
         int antiAliasingLevel = Properties.get("graphics", "anti-aliasing", 4);
         glfwDefaultWindowHints(); // Configure GLFW
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); //Set initial visibility
+        glfwWindowHint(GLFW_MAXIMIZED, isMaximized? GLFW_TRUE : GLFW_FALSE); //Set if the window is maximized todo figure this out
         glfwWindowHint(GLFW_RESIZABLE, isResizable? GLFW_TRUE : GLFW_FALSE); //Set if the window is resizable
         glfwWindowHint(GLFW_DECORATED, isBorderless? GLFW_FALSE : GLFW_TRUE); //Set whether it has a frame or not (borderless key here)
         glfwWindowHint(GLFW_SAMPLES, antiAliasingLevel);
@@ -71,6 +73,9 @@ public class Window {
     public static Vector2i getDim(){
         return new Vector2i(Engine.getWindow().width(),
                 Engine.getWindow().height());
+    }
+    public static float getAspectRatio(){
+        return (float)Engine.getWindow().width() / (float)Engine.getWindow().height();
     }
 
     //Set the window's position to the center of the monitor

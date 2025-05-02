@@ -57,6 +57,11 @@ public class Shader {
         return allGood;
     }
 
+    // Check if uniform is required
+    public boolean isUniformRequired(String name) {
+        return reqUniforms.containsKey(name);
+    }
+
     // find required uniforms
     private void findReqUniforms(String vertexSrc, String fragmentSrc){
         String fullSrc = vertexSrc + "\n" + fragmentSrc;
@@ -101,6 +106,13 @@ public class Shader {
         else{
             Log.writeln(Log.ERROR, name + " is not a required parameter for shader " + this.name);
             return null;
+        }
+    }
+    public void setParam(String name, ShaderParameter param){
+        if(reqUniforms.containsKey(name))
+            reqUniforms.put(name, param);
+        else{
+            Log.writeln(Log.ERROR, name + " is not a required parameter for shader " + this.name);
         }
     }
 }

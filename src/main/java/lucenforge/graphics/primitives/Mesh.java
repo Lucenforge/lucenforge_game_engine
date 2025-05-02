@@ -34,6 +34,8 @@ public class Mesh implements Renderable {
     private int ebo; // Element Buffer Object
     private int eboLength;
 
+    public Matrix4f position = new Matrix4f().identity(); // Model matrix
+
     public Vector3f[] normals; //todo make private!
     private Vector3f[] vertices;
     private Vector3i[] indices;
@@ -133,7 +135,8 @@ public class Mesh implements Renderable {
     }
 
     public void pushParamsToShader(){
-        setParam("");
+        if(shader.isUniformRequired("model"))
+            setParam("model", position);
         //Push uniforms (parameters)
         for(ShaderParameter param : params.values()){
             param.pushToShader();
@@ -285,7 +288,9 @@ public class Mesh implements Renderable {
             params.put(paramName, new ShaderParameter(paramFromShader));
         }
         ShaderParameter parameter = params.get(paramName);
-        if(value instanceof Matrix4f)
+        if(value instanceof Float)
+            parameter.set((Float) value);
+        else if(value instanceof Matrix4f)
             parameter.set((Matrix4f) value);
         else if(value instanceof Vector3f)
             parameter.set((Vector3f) value);
@@ -307,6 +312,10 @@ public class Mesh implements Renderable {
     }
     public Shader shader(){
         return shader;
+    }
+
+    public void setPosition(Vector3f position) {
+        this.position.translation(position);
     }
 
     // Getters for vertices and indices

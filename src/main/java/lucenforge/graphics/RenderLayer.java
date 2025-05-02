@@ -3,6 +3,7 @@ package lucenforge.graphics;
 import lucenforge.Engine;
 import lucenforge.files.Log;
 import lucenforge.graphics.primitives.Mesh;
+import lucenforge.output.Window;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,12 +84,19 @@ public class RenderLayer implements Renderable{
         for(Shader shader : shaderMeshBatches.keySet()) {
             // Get the meshes for this shader
             ArrayList<Mesh> meshes = shaderMeshBatches.get(shader);
+
             shader.bind();
+
+            // Set the camera parameters
+            if(shader.isUniformRequired("projection"))
+                shader.getParam("projection").set(camera.getProjectionMatrix());
+            if(shader.isUniformRequired("view"))
+                shader.getParam("view").set(camera.getViewMatrix());
+            if(shader.isUniformRequired("aspectRatio"))
+                shader.getParam("aspectRatio").set(Window.getAspectRatio());
+
+            // Set the shader parameters for each mesh
             for (Mesh mesh : meshes) {
-
-                mesh.setParam("projectionMatrix", camera.getProjectionMatrix());
-                mesh.setParam("viewMatrix", camera.getViewMatrix());
-
                 mesh.pushParamsToShader();
                 if(shader.areParametersSet()) {
                     mesh.render();

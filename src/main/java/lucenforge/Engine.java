@@ -36,7 +36,7 @@ public class Engine {
         int monitorIndex = Properties.get("window", "monitor", 0);
         window = new Window(Monitors.getIndex(monitorIndex));
         //Set the window position to the center
-        window.setCenter();
+        window.setCenter(); //todo find better thing for this
 
         // Set the OpenGL viewport to match new window size on resize
         glfwSetFramebufferSizeCallback(window.id(), (win, width, height) -> {

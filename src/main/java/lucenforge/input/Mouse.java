@@ -10,8 +10,8 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public class Mouse {
 
-    public static Vector2i pos; // Mouse position in pixels
-    public static Vector2d scroll;
+    public static Vector2i pos = new Vector2i(); // Mouse position in pixels
+    public static Vector2d scroll = new Vector2d(0, 0); // Mouse scroll in pixels
     private static final HashMap<Integer, Boolean> buttonStatus = new HashMap<>();
 
     public static void attach(Window attachedWindow) {
