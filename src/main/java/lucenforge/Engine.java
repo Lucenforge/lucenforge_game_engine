@@ -2,12 +2,12 @@ package lucenforge;
 
 import lucenforge.files.Properties;
 import lucenforge.graphics.GraphicsManager;
+import lucenforge.physics.Physics;
 import lucenforge.input.Keyboard;
 import lucenforge.input.Mouse;
 import lucenforge.files.Log;
 import lucenforge.output.Monitors;
 import lucenforge.output.Window;
-import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
@@ -60,8 +60,11 @@ public class Engine {
     }
 
     // Frame Loop Iteration: Begins a new frame, polls for events
-    public static void frameBegin(){frameBegin(true);}
+    public static void frameBegin(){
+        frameBegin(true);
+    }
     public static void frameBegin(boolean shouldClearScreen) {
+        Physics.startTimer("frame");
         if(shouldClearScreen)
             clearScreen();
         // Poll for window events

@@ -1,5 +1,6 @@
 package lucenforge.graphics.primitives;
 
+import lucenforge.entity.WorldEntity;
 import lucenforge.files.Log;
 import lucenforge.graphics.GraphicsManager;
 import lucenforge.graphics.Renderable;
@@ -18,7 +19,7 @@ import java.util.HashMap;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.ARBVertexArrayObject.*;
 
-public class Mesh implements Renderable {
+public class Mesh extends WorldEntity implements Renderable {
 
     public enum Usage {
         STATIC (GL_STATIC_DRAW ),
@@ -33,8 +34,6 @@ public class Mesh implements Renderable {
     private int vbo; // Vertex Buffer Object
     private int ebo; // Element Buffer Object
     private int eboLength;
-
-    public Matrix4f position = new Matrix4f().identity(); // Model matrix
 
     public Vector3f[] normals; //todo make private!
     private Vector3f[] vertices;
@@ -134,9 +133,9 @@ public class Mesh implements Renderable {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    public void pushParamsToShader(){
+    private void pushParamsToShader(){
         if(shader.isUniformRequired("model"))
-            setParam("model", position);
+            setParam("model", getModelMatrix());
         //Push uniforms (parameters)
         for(ShaderParameter param : params.values()){
             param.pushToShader();
@@ -146,6 +145,12 @@ public class Mesh implements Renderable {
     public void render() {
         if(vertices == null){
             Log.writeln(Log.ERROR, "Mesh not initialized; Cannot render!");
+            return;
+        }
+
+        pushParamsToShader();
+        if(!shader.areParametersSet()){
+            Log.writeln(Log.ERROR, "Shader " + shader.name() + " has not set all required uniforms!");
             return;
         }
 
@@ -267,6 +272,17 @@ public class Mesh implements Renderable {
         computeNormals(false);
     }
 
+    // Get Model Matrix for rendering
+    public Matrix4f getModelMatrix() {
+        return new Matrix4f()
+                .identity()
+                .translate(position)
+                .rotateX((float)Math.toRadians(rotation.x))
+                .rotateY((float)Math.toRadians(rotation.y))
+                .rotateZ((float)Math.toRadians(rotation.z))
+                .scale(scale);
+    }
+
     // Cleanup method
     public void cleanup() {
         if (mappedBuffer != null) {
@@ -290,19 +306,19 @@ public class Mesh implements Renderable {
         ShaderParameter parameter = params.get(paramName);
         if(value instanceof Float)
             parameter.set((Float) value);
-        else if(value instanceof Matrix4f)
-            parameter.set((Matrix4f) value);
         else if(value instanceof Vector3f)
             parameter.set((Vector3f) value);
         else if(value instanceof Vector4f)
             parameter.set((Vector4f) value);
+        else if(value instanceof Matrix4f)
+            parameter.set((Matrix4f) value);
         else{
-            Log.writeln(Log.ERROR, "Type needs to be added to ShaderParameter class: "+value);
+            Log.writeln(Log.ERROR, "Type needs to be added to Mesh class: "+value);
         }
     }
     public void setShader(String shaderName){
         if (GraphicsManager.masterShaders.containsKey(shaderName)) {
-            shader = GraphicsManager.masterShaders.get(shaderName);
+            setShader(GraphicsManager.masterShaders.get(shaderName));
         } else {
             Log.writeln(Log.ERROR, "Shader not found in master lookup: " + shaderName);
         }
@@ -312,10 +328,6 @@ public class Mesh implements Renderable {
     }
     public Shader shader(){
         return shader;
-    }
-
-    public void setPosition(Vector3f position) {
-        this.position.translation(position);
     }
 
     // Getters for vertices and indices

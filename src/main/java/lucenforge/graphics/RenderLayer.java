@@ -28,6 +28,10 @@ public class RenderLayer implements Renderable{
     // Adds a mesh to the render batches
     public void add(Mesh mesh) {
         Shader shader = mesh.shader();
+        if(shader == null) {
+            Log.writeln(Log.ERROR, "Mesh not added to render layer; Mesh has no shader set!");
+            return;
+        }
         String shaderName = shader.name();
         // Check if the shader exists in the lookup table
         if (!shaders.containsKey(shaderName)){
@@ -94,15 +98,12 @@ public class RenderLayer implements Renderable{
                 shader.getParam("view").set(camera.getViewMatrix());
             if(shader.isUniformRequired("aspectRatio"))
                 shader.getParam("aspectRatio").set(Window.getAspectRatio());
+            if(shader.isUniformRequired("cameraPos"))
+                shader.getParam("cameraPos").set(camera.position());
 
             // Set the shader parameters for each mesh
             for (Mesh mesh : meshes) {
-                mesh.pushParamsToShader();
-                if(shader.areParametersSet()) {
-                    mesh.render();
-                }else{
-                    Log.writeln(Log.ERROR, "Shader " + shader.name() + " has not set all required uniforms!");
-                }
+                mesh.render();
             }
             shader.unbind();
         }

@@ -62,6 +62,11 @@ public class GraphicsManager {
         float y = ((float) p / Window.getDim().y) * 2;
         return (x + y)/2;
     }
+    public static Vector2i ndcToPx(Vector3f p){
+        int x = (int) ((p.x + 1) / 2 * Window.getDim().x);
+        int y = (int) ((1 - p.y) / 2 * Window.getDim().y);
+        return new Vector2i(x, y);
+    }
 
     public static void cleanup() {
         // Cleanup all render layers

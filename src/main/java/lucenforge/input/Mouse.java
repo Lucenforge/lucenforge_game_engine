@@ -1,5 +1,6 @@
 package lucenforge.input;
 
+import lucenforge.Engine;
 import lucenforge.output.Window;
 import org.joml.Vector2d;
 import org.joml.Vector2i;
@@ -10,6 +11,7 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public class Mouse {
 
+    public static Vector2i lastPos = new Vector2i(); // Last mouse position in pixels
     public static Vector2i pos = new Vector2i(); // Mouse position in pixels
     public static Vector2d scroll = new Vector2d(0, 0); // Mouse scroll in pixels
     private static final HashMap<Integer, Boolean> buttonStatus = new HashMap<>();
@@ -32,8 +34,18 @@ public class Mouse {
         });
     }
 
+    public static void setCursorPos(Vector2i newPos) {
+        lastPos = pos;
+        glfwSetCursorPos(Engine.getWindow().id(), newPos.x, newPos.y);
+    }
     public static Vector2i getPos() {
         return pos != null ? pos : new Vector2i(0, 0);
+    }
+    public static Vector2i getDelta(){
+        Vector2i delta = new Vector2i(pos);
+        delta.sub(lastPos);
+        lastPos = pos;
+        return delta;
     }
 
     public static boolean isButtonPressed(int button) {
