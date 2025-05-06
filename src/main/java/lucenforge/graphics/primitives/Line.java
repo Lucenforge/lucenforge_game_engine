@@ -2,13 +2,12 @@ package lucenforge.graphics.primitives;
 
 import lucenforge.files.Log;
 import lucenforge.graphics.GraphicsManager;
-import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 
-public class Line extends FlatQuadrilateral{
+public class Line extends Quadrilateral {
 
     Vector3f p1, p2;
     float width;

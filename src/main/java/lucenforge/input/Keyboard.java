@@ -42,6 +42,7 @@ public class Keyboard {
 
     //Get key status
     public static int keyStatus(String keyString){
+        keyString = keyString.toUpperCase();
         if(keyString.length() > 1)
             switch(keyString){
                 case "ESCAPE" -> {

@@ -1,29 +1,43 @@
 package lucenforge.physics;
 
-import lucenforge.files.Log;
-
-import java.util.HashMap;
-
 public class Physics {
 
-    private static HashMap<String, Long> startTimes = new HashMap<>();
-    private static HashMap<String, Long> lastTimes = new HashMap<>();
+    private static long gameTimeStart ;
+    private static long frameStartTime;
+    private static long lastFrameTime ;
 
-    public static void startTimer(String name) {
-        startTimes.put(name, System.currentTimeMillis());
+    public static void init(){
+        long millis = System.currentTimeMillis();
+        gameTimeStart = millis;
+        frameStartTime = millis;
+        lastFrameTime = 0;
     }
 
-    public static Long getTimerTime(String name) {
-        if (startTimes.containsKey(name)) {
-            return System.currentTimeMillis() - startTimes.get(name);
-        } else {
-            Log.writeln(Log.WARNING, "Timer not found: " + name);
-            return null;
-        }
+    // Returns the time since startup in milliseconds
+    public static long getRuntime(){
+        return System.currentTimeMillis() - gameTimeStart;
     }
 
-    public static float getFPS() {
-        long frameTime = getTimerTime("frame");
-        return 1000f / frameTime;
+    // Returns the last frame's time in milliseconds
+    public static long lastFrameMillis() {
+        return lastFrameTime;
+    }
+    public static float lastFrameSeconds() {
+        return lastFrameMillis()/1000f;
+    }
+
+    // Returns the current frame's time in milliseconds
+    public static long currentFrameMillis() {
+        return System.currentTimeMillis() - frameStartTime;
+    }
+    public static float currentFrameSeconds() {
+        return currentFrameMillis()/1000f;
+    }
+
+    // Updates the frame times (and more later)
+    public static void update() {
+        long currentTime = System.currentTimeMillis();
+        lastFrameTime = currentTime - frameStartTime;
+        frameStartTime = currentTime;
     }
 }

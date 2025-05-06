@@ -3,7 +3,7 @@ package lucenforge.graphics.primitives;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
-public class FlatQuadrilateral extends Mesh {
+public class Quadrilateral extends Mesh {
 
     public void init(Vector3f p1, Vector3f p2, Vector3f p3, Vector3f p4, Usage usage){
         // Define the vertices of the quadrilateral

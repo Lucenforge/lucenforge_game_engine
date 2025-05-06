@@ -46,7 +46,10 @@ public class WorldEntity {
         lookDirection.normalize();
     }
 
-    public void render(){
-
+    public void setScale(float scale){
+        this.scale = new Vector3f(scale, scale, scale);
+    }
+    public void setScale(Vector3f scale){
+        this.scale = scale;
     }
 }

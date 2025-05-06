@@ -47,6 +47,8 @@ public class Engine {
         Keyboard.attach(window);
         Mouse.attach(window);
 
+        // Init physics
+        Physics.init();
 
         // Initialize OpenGL context and renderer
         glfwMakeContextCurrent(window.id()); // Make the window's context current
@@ -64,7 +66,6 @@ public class Engine {
         frameBegin(true);
     }
     public static void frameBegin(boolean shouldClearScreen) {
-        Physics.startTimer("frame");
         if(shouldClearScreen)
             clearScreen();
         // Poll for window events
@@ -82,11 +83,14 @@ public class Engine {
     }
     // Frame Loop Iteration: Ends the current frame, swaps buffers
     public static void frameEnd(){
+        if(isShutdownRequested())
+            shutdown();
+
         // swap the color buffers
         glfwSwapBuffers(window.id());
 
-        if(isShutdownRequested())
-            shutdown();
+        // Let the physics do their thing
+        Physics.update();
     }
 
     public static void shutdown(){
