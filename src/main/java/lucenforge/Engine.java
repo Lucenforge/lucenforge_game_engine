@@ -68,8 +68,6 @@ public class Engine {
     public static void frameBegin(boolean shouldClearScreen) {
         if(shouldClearScreen)
             clearScreen();
-        // Poll for window events
-        glfwPollEvents();
     }
     // Frame Loop Iteration: Clears the screen and depth buffer
     public static void clearScreen(){
@@ -86,11 +84,14 @@ public class Engine {
         if(isShutdownRequested())
             shutdown();
 
-        // swap the color buffers
-        glfwSwapBuffers(window.id());
-
-        // Let the physics do their thing
+        // swap the color buffers if it's time to render
+        if(GraphicsManager.shouldRender()) {
+            glfwSwapBuffers(window.id());
+        }
+        // Update everything
+        glfwPollEvents();
         Physics.update();
+        GraphicsManager.update();
     }
 
     public static void shutdown(){

@@ -2,10 +2,10 @@ package lucenforge.graphics;
 
 import lucenforge.files.FileTools;
 import lucenforge.files.Log;
-import lucenforge.files.Properties;
 import lucenforge.graphics.primitives.Mesh;
+import lucenforge.output.Monitor;
 import lucenforge.output.Window;
-import lucenforge.physics.Physics;
+import lucenforge.files.Properties;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -26,6 +26,14 @@ public class GraphicsManager {
 
     private static Window window;
 
+    private static final float[] fpsRecord = new float[100];
+    private static int fpsRecordIndex = 0;
+    private static long targetFrameTime;
+    private static long nextFrameTargetTimestamp;
+    private static long lastFrameTimestamp;
+    private static long lastLastFrameTimestamp;
+    private static boolean shouldRender = false;
+
     // Initialize the renderer
     public static void init(Window window) {
         GraphicsManager.window = window;
@@ -40,17 +48,53 @@ public class GraphicsManager {
         // Load shaders and meshes
         masterShaders = FileTools.loadShaderFiles();
         masterMeshes = FileTools.loadMeshFiles();
+
+        // Init frame time
+        // Target FPS: -1 = no limit, 0 = monitor, >0 = that num
+        long targetFPS = Properties.get("graphics", "target_fps", 0);
+        if(targetFPS == -1)
+            targetFrameTime = 0;
+        else if(targetFPS == 0){
+            Monitor monitor = window.monitor();
+            targetFrameTime = (int) Math.floor(1000d / monitor.refreshRate());
+        }else
+            targetFrameTime = (int) Math.floor(1000d / targetFPS);
+        nextFrameTargetTimestamp = targetFrameTime + System.currentTimeMillis();
+        Log.writeln(Log.SYSTEM, "Targeting " + Math.round(1000f/ targetFrameTime) + " fps");
     }
 
     // Get the FPS for the last frame
     public static float getFPS(){
-        return 1f/(Physics.lastFrameMillis()/1000f);
+        return 1000f/(lastFrameMillis());
+    }
+    public static float getAvgFPS(){
+        float total = 0;
+        for(Float fps : fpsRecord){
+            total += fps;
+        }
+        return total/fpsRecord.length;
+    }
+    public static long lastFrameMillis(){
+        return lastFrameTimestamp - lastLastFrameTimestamp;
     }
 
     public static boolean shouldRender(){
-        float maxFrameTime = 1f/Properties.get("graphics", "max_fps", 60);
-//        Log.writeln(Log.DEBUG, "Max frame time: " + maxFrameTime + ", Current frame time: " + Physics.currentFrameSeconds());
-        return (Physics.currentFrameSeconds() > maxFrameTime);
+        return shouldRender;
+    }
+
+    public static void update(){
+        long currentTimeMillis = System.currentTimeMillis();
+        if(currentTimeMillis >= nextFrameTargetTimestamp) {
+            lastLastFrameTimestamp = lastFrameTimestamp;
+            nextFrameTargetTimestamp += targetFrameTime;
+            shouldRender = true;
+
+            lastFrameTimestamp = currentTimeMillis;
+            fpsRecord[fpsRecordIndex] = getFPS();
+            fpsRecordIndex = (fpsRecordIndex + 1) % fpsRecord.length;
+        }else{
+            shouldRender = false;
+        }
     }
 
     // Register a render layer

@@ -22,8 +22,8 @@ public class Window {
     private int width, height;
 
     public Window(Monitor monitor) {
-        this.width = Properties.get("window", "resolution_x", 800);
-        this.height = Properties.get("window", "resolution_y", 600);
+        this.width = Properties.get("window", "resolution_x", (int)(monitor.width()*0.75f));
+        this.height = Properties.get("window", "resolution_y", (int)(monitor.height()*0.75f));
         this.monitor = monitor;
 
         //Set window properties
@@ -68,6 +68,10 @@ public class Window {
     // Get the window's height
     public int height() {
         return height;
+    }
+    // Get the current monitor
+    public Monitor monitor(){
+        return monitor;
     }
     // Get the primary monitor's width and height
     public static Vector2i getDim(){

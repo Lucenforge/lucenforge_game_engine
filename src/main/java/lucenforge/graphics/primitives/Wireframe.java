@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class Wireframe extends MeshGroup {
 
     public Wireframe(Mesh target, Mesh.Usage usage){
-        float width = 0.005f;
+        float width = 0.01f;
         Vector3f[] verts = target.getVertices();
         Vector3i[] indexes = target.getIndices();
         for(Vector3i index : indexes){

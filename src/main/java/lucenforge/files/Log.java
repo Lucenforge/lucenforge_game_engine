@@ -8,9 +8,14 @@ public class Log {
 
     private static BufferedWriter writer;
     private static String lastLine = "";
+    private static Boolean loggingEnabled = null;
 
     public static void checkInit(){
+        // Check if logging is enabled from properties
         if(writer != null) return;
+        if(loggingEnabled == null)
+            loggingEnabled = Properties.get("logging", "enabled", true);
+        if(!loggingEnabled) return;
         try{
             String logDirPath = "_logs";
             // Ensure the log directory exists
@@ -55,7 +60,8 @@ public class Log {
             return; // Don't log the same message twice
 
         System.out.print(message);
-        sendToLogFile(message.toString());
+        if(loggingEnabled)
+            sendToLogFile(message.toString());
 
         lastLine = message.toString();
     }

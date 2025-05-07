@@ -19,7 +19,9 @@ public class Properties {
         }
         // Initialize the properties file
         try {
-            ini = new Wini(new File(PROPERTIES_FILE_PATH));
+            File propertiesFile = new File(PROPERTIES_FILE_PATH);
+            propertiesFile.createNewFile();
+            ini = new Wini(propertiesFile);
         } catch(IOException e) {
             Log.writeln(Log.ERROR, "Error loading properties file: " + e.getMessage());
         }
@@ -56,7 +58,13 @@ public class Properties {
     // get anything else (from file)
     public static <T> T get(String section, String key, Class<T> type, T defaultValue) {
         checkInit();
-        T value = ini.get(section, key, type);
+        T value;
+        try {
+            value = ini.get(section, key, type);
+        }catch (Exception e){
+            Log.writeln(Log.ERROR, "Error getting property: " + section + "." + key + ", setting to default");
+            value = null;
+        }
         if (value == null) {
             set(section, key, defaultValue);
             return defaultValue;
@@ -67,7 +75,12 @@ public class Properties {
     public static void set(String section, String key, Object value) {
         checkInit();
         // Check if the section exists
-        Object current = ini.get(section, key, value.getClass());
+        Object current = null;
+        try {
+            current = ini.get(section, key, value.getClass());
+        } catch (Exception e) {
+            Log.writeln(Log.ERROR, "Error setting property: " + section + "." + key + " to " + value + ", setting to default");
+        }
         if (current != null && current.equals(value))
             return;
 

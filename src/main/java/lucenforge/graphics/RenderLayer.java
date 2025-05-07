@@ -66,8 +66,12 @@ public class RenderLayer implements Renderable{
 
     // Render Loop Iteration: Clears the screen and prepares for the next frame
     public void render(){render(true);}
-
     public void render(boolean clearDepth) {
+        // Render when the FPS target is reached
+        if(!GraphicsManager.shouldRender()){
+            return;
+        }
+        // Clear the screen
         if(clearDepth)
             Engine.clearDepthBuffer();
         // Enable blending todo make these settable

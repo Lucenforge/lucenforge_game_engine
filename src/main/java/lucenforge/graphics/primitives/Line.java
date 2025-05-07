@@ -22,6 +22,9 @@ public class Line extends Quadrilateral {
         init(a, b, widthNDC, usage);
     }
 
+    public Line(int width, Usage usage){
+        init(new Vector3f(), new Vector3f(), GraphicsManager.pxToNDC(width), usage);
+    }
     public Line(float width, Usage usage){
         init(new Vector3f(), new Vector3f(), width, usage);
     }

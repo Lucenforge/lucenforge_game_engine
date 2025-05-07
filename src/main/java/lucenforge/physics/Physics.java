@@ -2,42 +2,34 @@ package lucenforge.physics;
 
 public class Physics {
 
-    private static long gameTimeStart ;
-    private static long frameStartTime;
-    private static long lastFrameTime ;
+    private static long gameStartTimeMillis;
+
+    private static long updateStartTime;
+    private static long deltaTimeMillis;
 
     public static void init(){
-        long millis = System.currentTimeMillis();
-        gameTimeStart = millis;
-        frameStartTime = millis;
-        lastFrameTime = 0;
+        gameStartTimeMillis = System.currentTimeMillis();
     }
 
     // Returns the time since startup in milliseconds
-    public static long getRuntime(){
-        return System.currentTimeMillis() - gameTimeStart;
+    public static long getRuntimeMillis(){
+        return System.currentTimeMillis() - gameStartTimeMillis;
+    }
+    public static float getRuntimeSeconds(){
+        return getRuntimeMillis()/1000f;
     }
 
-    // Returns the last frame's time in milliseconds
-    public static long lastFrameMillis() {
-        return lastFrameTime;
-    }
-    public static float lastFrameSeconds() {
-        return lastFrameMillis()/1000f;
-    }
-
-    // Returns the current frame's time in milliseconds
-    public static long currentFrameMillis() {
-        return System.currentTimeMillis() - frameStartTime;
-    }
-    public static float currentFrameSeconds() {
-        return currentFrameMillis()/1000f;
-    }
-
-    // Updates the frame times (and more later)
+    // Updates the time (and more later)
     public static void update() {
-        long currentTime = System.currentTimeMillis();
-        lastFrameTime = currentTime - frameStartTime;
-        frameStartTime = currentTime;
+        long millisNow = System.currentTimeMillis();
+        deltaTimeMillis = millisNow - updateStartTime;
+        updateStartTime = millisNow;
+    }
+
+    public static long deltaTimeMillis(){
+        return deltaTimeMillis;
+    }
+    public static float deltaTimeSeconds(){
+        return deltaTimeMillis()/1000f;
     }
 }
