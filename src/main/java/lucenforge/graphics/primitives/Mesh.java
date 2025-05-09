@@ -11,9 +11,11 @@ import org.joml.Vector3f;
 import org.joml.Vector3i;
 import org.joml.Vector4f;
 
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL20.*;
@@ -35,23 +37,29 @@ public class Mesh extends WorldEntity implements Renderable {
     private int ebo; // Element Buffer Object
     private int eboLength;
 
-    public Vector3f[] normals; //todo make private!
-    private Vector3f[] vertices;
-    private Vector3i[] indices;
+    // Vertexes
+    private ArrayList<Vector3f> vertices;
+    private ArrayList<Vector3f> vertexTextures;
+    private ArrayList<Vector3f> vertexNormals;
+    // Indices
+    private ArrayList<Vector3i> vertexIndices;
+    private ArrayList<Vector3i> textureIndices;
+    private ArrayList<Vector3i> normalIndices;
+
     private Usage usage;
     private Shader shader;
     private HashMap<String, ShaderParameter> params = new HashMap<>();
 
     FloatBuffer mappedBuffer = null;
 
-    public Mesh init(Vector3f[] vertices, Vector3i[] indices, Usage usage) {
-        init(vertices, indices, normals, usage);
+    public Mesh init(ArrayList<Vector3f> vertices, ArrayList<Vector3i> indices, Usage usage) {
+        init(vertices, indices, vertexNormals, usage);
         return init(usage);
     }
-    public Mesh init(Vector3f[] vertices, Vector3i[] indices, Vector3f[] normals, Usage usage) {
+    public Mesh init(ArrayList<Vector3f> vertices, ArrayList<Vector3i> indices, ArrayList<Vector3f> normals, Usage usage) {
         this.vertices = vertices;
-        this.indices = indices;
-        this.normals = normals;
+        this.vertexIndices = indices;
+        this.vertexNormals = normals;
         return init(usage);
     }
     public Mesh init(Usage usage) {
@@ -67,8 +75,8 @@ public class Mesh extends WorldEntity implements Renderable {
         // Vertex buffer
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         // Allocate buffer space
-        int stride = normals != null? 6 : 3; // 3 floats per vertex, 3 for normals
-        glBufferData(GL_ARRAY_BUFFER, (long) vertices.length * stride * Float.BYTES, usage.glID);
+        int stride = vertexNormals != null? 6 : 3; // 3 floats per vertex, 3 for normals
+        glBufferData(GL_ARRAY_BUFFER, (long) vertices.size() * stride * Float.BYTES, usage.glID);
         // If usage is STREAM, use mapped buffer
         if (usage == Usage.STREAM) {
             ByteBuffer mapBuffer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -93,7 +101,7 @@ public class Mesh extends WorldEntity implements Renderable {
         glVertexAttribPointer(0, 3, GL_FLOAT, false, stride * Float.BYTES, 0);
         glEnableVertexAttribArray(0);
         // Vertex attribute pointer (normals)
-        if (normals != null) {
+        if (vertexNormals != null) {
             glVertexAttribPointer(1, 3, GL_FLOAT, false, stride * Float.BYTES, 3 * Float.BYTES);
             glEnableVertexAttribArray(1);
         }
@@ -105,7 +113,7 @@ public class Mesh extends WorldEntity implements Renderable {
         return this;
     }
 
-    public void updateVerts(Vector3f[] vertices) {
+    public void updateVerts(ArrayList<Vector3f> vertices) {
         if (vbo == 0 || vertices == null) {
             Log.writeln(Log.ERROR, "updateVerts called before init!");
             return;
@@ -161,18 +169,18 @@ public class Mesh extends WorldEntity implements Renderable {
 
     // Compile vertices and normals from Vector3f array to float array
     private float[] compileVBO() {
-        int stride = normals != null? 6 : 3; // 3 floats per vertex, 3 for normals
-        float[] vertexBuffer = new float[vertices.length * stride];
+        int stride = vertexNormals != null? 6 : 3; // 3 floats per vertex, 3 for normals
+        float[] vertexBuffer = new float[vertices.size() * stride];
         // For every vertex, add the position and normal (if present) to the buffer
-        for (int i = 0; i < vertices.length; i++) {
+        for (int i = 0; i < vertices.size(); i++) {
             int base = i * stride;
-            vertexBuffer[base]     = vertices[i].x;
-            vertexBuffer[base + 1] = vertices[i].y;
-            vertexBuffer[base + 2] = vertices[i].z;
-            if (normals != null) {
-                vertexBuffer[base + 3] = normals[i].x;
-                vertexBuffer[base + 4] = normals[i].y;
-                vertexBuffer[base + 5] = normals[i].z;
+            vertexBuffer[base]     = vertices.get(i).x;
+            vertexBuffer[base + 1] = vertices.get(i).y;
+            vertexBuffer[base + 2] = vertices.get(i).z;
+            if (vertexNormals != null) {
+                vertexBuffer[base + 3] = vertexNormals.get(i).x;
+                vertexBuffer[base + 4] = vertexNormals.get(i).y;
+                vertexBuffer[base + 5] = vertexNormals.get(i).z;
             }
         }
         return vertexBuffer;
@@ -180,12 +188,12 @@ public class Mesh extends WorldEntity implements Renderable {
 
     // Compile indices from Vector3i array to int array
     private int[] compileEBO(){
-        int[] indexBuffer = new int[indices.length * 3];
+        int[] indexBuffer = new int[vertexIndices.size() * 3];
         // For every index, add the vertex indices to the buffer
-        for (int i = 0; i < indices.length; i++) {
-            indexBuffer[i * 3    ] = indices[i].x;
-            indexBuffer[i * 3 + 1] = indices[i].y;
-            indexBuffer[i * 3 + 2] = indices[i].z;
+        for (int i = 0; i < vertexIndices.size(); i++) {
+            indexBuffer[i * 3    ] = vertexIndices.get(i).x;
+            indexBuffer[i * 3 + 1] = vertexIndices.get(i).y;
+            indexBuffer[i * 3 + 2] = vertexIndices.get(i).z;
         }
         eboLength = indexBuffer.length;
         return indexBuffer;
@@ -193,19 +201,16 @@ public class Mesh extends WorldEntity implements Renderable {
 
     // Compute normals for the mesh todo check as this might not fully be correct, though that could be the shader
     public void computeNormals(boolean smooth) {
-        if (normals != null) {
+        if (vertexNormals != null) {
             Log.writeln(Log.WARNING, "Normals already computed, overwriting");
         }
 
-        normals = new Vector3f[vertices.length];
-        for (int i = 0; i < normals.length; i++) {
-            normals[i] = new Vector3f();
-        }
+        vertexNormals = new ArrayList<>();
 
-        for (Vector3i face : indices) {
-            Vector3f v1 = vertices[face.x];
-            Vector3f v2 = vertices[face.y];
-            Vector3f v3 = vertices[face.z];
+        for (Vector3i face : vertexIndices) {
+            Vector3f v1 = vertices.get(face.x);
+            Vector3f v2 = vertices.get(face.y);
+            Vector3f v3 = vertices.get(face.z);
 
             Vector3f edge1 = v2.sub(v1, new Vector3f());
             Vector3f edge2 = v3.sub(v1, new Vector3f());
@@ -213,18 +218,18 @@ public class Mesh extends WorldEntity implements Renderable {
             Vector3f normal = edge1.cross(edge2).normalize();
 
             if (smooth) {
-                normals[face.x].add(normal);
-                normals[face.y].add(normal);
-                normals[face.z].add(normal);
+                vertexNormals.set(face.x, vertexNormals.get(face.x).add(normal));
+                vertexNormals.set(face.y, vertexNormals.get(face.y).add(normal));
+                vertexNormals.set(face.z, vertexNormals.get(face.z).add(normal));
             } else {
-                normals[face.x] = new Vector3f(normal);
-                normals[face.y] = new Vector3f(normal);
-                normals[face.z] = new Vector3f(normal);
+                vertexNormals.set(face.x, new Vector3f(normal));
+                vertexNormals.set(face.y, new Vector3f(normal));
+                vertexNormals.set(face.z, new Vector3f(normal));
             }
         }
 
         if (smooth) {
-            for (Vector3f n : normals) {
+            for (Vector3f n : vertexNormals) {
                 n.normalize();
             }
         }
@@ -234,42 +239,94 @@ public class Mesh extends WorldEntity implements Renderable {
     // Parse mesh data from an obj string
     // Only supports simple v and f right now, no normals or textures
     public void parseOBJ(String fileContents) {
-        ArrayList<Vector3f> vertexList = new ArrayList<>();
-        ArrayList<Vector3i> indexList = new ArrayList<>();
         String[] lines = fileContents.split("\n");
         for (String line : lines) {
+            // Lines starting with V (vertex)
             if (line.startsWith("v ")) {
+                if(vertices == null)
+                    vertices = new ArrayList<>();
                 String[] parts = line.split(" ");
                 if (parts.length == 4) {
                     float x = Float.parseFloat(parts[1]);
                     float y = Float.parseFloat(parts[2]);
                     float z = Float.parseFloat(parts[3]);
-                    vertexList.add(new Vector3f(x, y, z));
+                    vertices.add(new Vector3f(x, y, z));
                 }else{
                     Log.writeln(Log.WARNING, "Invalid vertex line: " + line + "; Expected format: v x y z");
                 }
+            // Lines starting with f (face indices)
             } else if (line.startsWith("f ")) {
+                if(vertexIndices == null)
+                    vertexIndices = new ArrayList<>();
+                // Split by space to get each index
                 String[] parts = line.replace("\r","").split(" ");
-                if (parts.length == 4){
-                    //todo include texture and normal data later; This will change
-                    int x = Integer.parseInt(parts[1].split("/")[0]) - 1;
-                    int y = Integer.parseInt(parts[2].split("/")[0]) - 1;
-                    int z = Integer.parseInt(parts[3].split("/")[0]) - 1;
-                    indexList.add(new Vector3i(x, y, z));
+                // check for invalid line
+                if (parts.length < 4)
+                    Log.writeln(Log.WARNING, "Invalid face line: " + line + "; Expected format: f v1 v2 v3 ...");
+                // get each part for triangulation
+                int[] vIndicesRaw = new int[parts.length - 1];
+                int[] tIndicesRaw = new int[parts.length - 1];
+                int[] nIndicesRaw = new int[parts.length - 1];
+                for (int part = 1; part < parts.length; part++) {
+                    String[] types = parts[part].split("/");
+                    vIndicesRaw[part - 1] = Integer.parseInt(types[0]) - 1;
+                    // If of the format v/t/n, parse the texture and normal indices
+                    if(types.length > 1){
+                        // Make sure the texture indices is normalized and add the part to the list
+                        if(textureIndices == null)
+                            textureIndices = new ArrayList<>();
+                        tIndicesRaw[part - 1] = Integer.parseInt(types[1]) - 1;
+                        // Make sure the normal indices is normalized and add the part to the list
+                        if(normalIndices == null)
+                            normalIndices = new ArrayList<>();
+                        nIndicesRaw[part - 1] = Integer.parseInt(types[2]) - 1;
+                    }
+                }
+                // Triangulate the face
+                Vector3i[] vIndicesTri = triangulateMultiFaces(vIndicesRaw);
+                Vector3i[] tIndicesTri = triangulateMultiFaces(tIndicesRaw);
+                Vector3i[] nIndicesTri = triangulateMultiFaces(nIndicesRaw);
+                // Add the indices to the list
+                for(int triangle = 0; triangle < vIndicesTri.length; triangle++){
+                    vertexIndices.add(vIndicesTri[triangle]);
+                    if(textureIndices != null)
+                        textureIndices.add(tIndicesTri[triangle]);
+                    if(normalIndices != null)
+                        normalIndices.add(nIndicesTri[triangle]);
+                }
+            // Lines starting with vt (texture coordinates)
+            } else if (line.startsWith("vt ")){
+                String[] parts = line.split(" ");
+                if (parts.length == 3) {
+                    float u = Float.parseFloat(parts[1]);
+                    float v = Float.parseFloat(parts[2]);
+                    vertexTextures.add(new Vector3f(u, v, 0));
                 }else{
-                    Log.writeln(Log.WARNING, "Invalid face line: " + line + "; Expected format: f v1 v2 v3");
+                    Log.writeln(Log.WARNING, "Invalid texture line: " + line + "; Expected format: vt u v");
+                }
+            // Lines starting with vn (vertex normals)
+            } else if (line.startsWith("vn ")) {
+                String[] parts = line.split(" ");
+                if (parts.length == 4) {
+                    float x = Float.parseFloat(parts[1]);
+                    float y = Float.parseFloat(parts[2]);
+                    float z = Float.parseFloat(parts[3]);
+                    normalIndices.add(new Vector3i((int)x, (int)y, (int)z));
+                }else{
+                    Log.writeln(Log.WARNING, "Invalid normal line: " + line + "; Expected format: vn x y z");
                 }
             }
         }
-        vertices = new Vector3f[vertexList.size()];
-        for (int i = 0; i < vertexList.size(); i++) {
-            vertices[i] = vertexList.get(i);
+        if(vertexNormals == null)
+            computeNormals(false);
+    }
+
+    private Vector3i[] triangulateMultiFaces(int[] faceIndices){
+        Vector3i[] triangles = new Vector3i[faceIndices.length - 2];
+        for (int i = 0; i < faceIndices.length - 2; i++) {
+            triangles[i] = new Vector3i(faceIndices[0], faceIndices[i + 1], faceIndices[i + 2]);
         }
-        indices = new Vector3i[indexList.size()];
-        for (int i = 0; i < indexList.size(); i++) {
-            indices[i] = indexList.get(i);
-        }
-        computeNormals(false);
+        return triangles;
     }
 
     // Get Model Matrix for rendering
@@ -331,16 +388,16 @@ public class Mesh extends WorldEntity implements Renderable {
     }
 
     // Getters for vertices and indices
-    public Vector3f[] getVertices(){
-        return vertices;
-    }
-    public Vector3i[] getIndices(){
-        return indices;
-    }
     public int getNumVerts(){
-        return vertices.length; // Each vertex has 3 components (x, y, z)
+        return vertices.size(); // Each vertex has 3 components (x, y, z)
     }
     public int getNumFaces(){
-        return indices.length; // Each face is a triangle, so 3 indices per face
+        return vertexIndices.size(); // Each face is a triangle, so 3 indices per face
+    }
+    public ArrayList<Vector3f> vertices(){
+        return vertices;
+    }
+    public ArrayList<Vector3i> indices(){
+        return vertexIndices;
     }
 }
