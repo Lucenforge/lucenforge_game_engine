@@ -14,14 +14,14 @@ public class Log {
         // Check if logging is enabled from properties
         if(writer != null) return;
         if(loggingEnabled == null)
-            loggingEnabled = Properties.get("logging", "enabled", true);
+            loggingEnabled = (Boolean) Properties.getBool("logging", "enabled", true);
         if(!loggingEnabled) return;
         try{
             String logDirPath = "_logs";
             // Ensure the log directory exists
             FileTools.createDirectory(logDirPath);
             // Get the number of logs allowed from properties
-            int maxLogs = Properties.get("logging", "max_logs", 3);
+            int maxLogs = Properties.getInt("logging", "max_logs", 3);
             // If the number of files is greater than the max logs, delete the oldest log file
             FileTools.limitNumFilesInDir(logDirPath, maxLogs);
             // Create a new log file with the current timestamp

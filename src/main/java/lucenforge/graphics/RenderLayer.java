@@ -2,7 +2,7 @@ package lucenforge.graphics;
 
 import lucenforge.Engine;
 import lucenforge.files.Log;
-import lucenforge.graphics.primitives.Mesh;
+import lucenforge.graphics.primitives.mesh.Mesh;
 import lucenforge.output.Window;
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package lucenforge.graphics.primitives;
+package lucenforge.graphics.primitives.mesh;
 
 import lucenforge.entity.WorldEntity;
 import lucenforge.files.Log;
@@ -6,16 +6,12 @@ import lucenforge.graphics.GraphicsManager;
 import lucenforge.graphics.Renderable;
 import lucenforge.graphics.Shader;
 import lucenforge.graphics.ShaderParameter;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector3i;
-import org.joml.Vector4f;
+import org.joml.*;
 
-import java.lang.reflect.Array;
+import java.lang.Math;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL20.*;
@@ -37,9 +33,11 @@ public class Mesh extends WorldEntity implements Renderable {
     private int ebo; // Element Buffer Object
     private int eboLength;
 
+    //todo Get rid of out of bounds indices
+
     // Vertexes
     private ArrayList<Vector3f> vertices;
-    private ArrayList<Vector3f> vertexTextures;
+    private ArrayList<Vector2f> vertexTextures;
     private ArrayList<Vector3f> vertexNormals;
     // Indices
     private ArrayList<Vector3i> vertexIndices;
@@ -174,7 +172,7 @@ public class Mesh extends WorldEntity implements Renderable {
         // For every vertex, add the position and normal (if present) to the buffer
         for (int i = 0; i < vertices.size(); i++) {
             int base = i * stride;
-            vertexBuffer[base]     = vertices.get(i).x;
+            vertexBuffer[base] = vertices.get(i).x;
             vertexBuffer[base + 1] = vertices.get(i).y;
             vertexBuffer[base + 2] = vertices.get(i).z;
             if (vertexNormals != null) {
@@ -206,6 +204,9 @@ public class Mesh extends WorldEntity implements Renderable {
         }
 
         vertexNormals = new ArrayList<>();
+        for(Vector3f vertex : vertices){
+            vertexNormals.add(new Vector3f());
+        }
 
         for (Vector3i face : vertexIndices) {
             Vector3f v1 = vertices.get(face.x);
@@ -222,9 +223,9 @@ public class Mesh extends WorldEntity implements Renderable {
                 vertexNormals.set(face.y, vertexNormals.get(face.y).add(normal));
                 vertexNormals.set(face.z, vertexNormals.get(face.z).add(normal));
             } else {
-                vertexNormals.set(face.x, new Vector3f(normal));
-                vertexNormals.set(face.y, new Vector3f(normal));
-                vertexNormals.set(face.z, new Vector3f(normal));
+                vertexNormals.set(face.x, normal);
+                vertexNormals.set(face.y, normal);
+                vertexNormals.set(face.z, normal);
             }
         }
 
@@ -236,9 +237,10 @@ public class Mesh extends WorldEntity implements Renderable {
     }
 
 
-    // Parse mesh data from an obj string
+    // Parse mesh data from an obj string; todo redo everything
     // Only supports simple v and f right now, no normals or textures
     public void parseOBJ(String fileContents) {
+        int skippedOBJFaces = 0;
         String[] lines = fileContents.split("\n");
         for (String line : lines) {
             // Lines starting with V (vertex)
@@ -254,10 +256,34 @@ public class Mesh extends WorldEntity implements Renderable {
                 }else{
                     Log.writeln(Log.WARNING, "Invalid vertex line: " + line + "; Expected format: v x y z");
                 }
+            // Lines starting with vt (texture coordinates)
+            } else if (line.startsWith("vt ")){
+                String[] parts = line.split(" ");
+                if (parts.length == 3) {
+                    float u = Float.parseFloat(parts[1]);
+                    float v = Float.parseFloat(parts[2]);
+                    if(vertexTextures == null)
+                        vertexTextures = new ArrayList<>();
+                    vertexTextures.add(new Vector2f(u, v));
+                }else{
+                    Log.writeln(Log.WARNING, "Invalid texture line: " + line + "; Expected format: vt u v");
+                }
+            // Lines starting with vn (vertex normals)
+            } else if (line.startsWith("vn ")) {
+                String[] parts = line.split(" ");
+                if (parts.length == 4) {
+                    float x = Float.parseFloat(parts[1]);
+                    float y = Float.parseFloat(parts[2]);
+                    float z = Float.parseFloat(parts[3]);
+                    if(vertexNormals == null) {
+                        vertexNormals = new ArrayList<>();
+                    }
+                    vertexNormals.add(new Vector3f(x, y, z));
+                }else{
+                    Log.writeln(Log.WARNING, "Invalid normal line: " + line + "; Expected format: vn x y z");
+                }
             // Lines starting with f (face indices)
             } else if (line.startsWith("f ")) {
-                if(vertexIndices == null)
-                    vertexIndices = new ArrayList<>();
                 // Split by space to get each index
                 String[] parts = line.replace("\r","").split(" ");
                 // check for invalid line
@@ -269,17 +295,39 @@ public class Mesh extends WorldEntity implements Renderable {
                 int[] nIndicesRaw = new int[parts.length - 1];
                 for (int part = 1; part < parts.length; part++) {
                     String[] types = parts[part].split("/");
-                    vIndicesRaw[part - 1] = Integer.parseInt(types[0]) - 1;
+                    // Read the vertex index
+                    int vIndex = Integer.parseInt(types[0]) - 1;
+                    // Skip face if index not present
+                    if(vIndex >= vertices.size()){
+                        skippedOBJFaces++;
+                        continue;
+                    }
+                    vIndicesRaw[part - 1] = vIndex;
                     // If of the format v/t/n, parse the texture and normal indices
                     if(types.length > 1){
                         // Make sure the texture indices is normalized and add the part to the list
                         if(textureIndices == null)
                             textureIndices = new ArrayList<>();
-                        tIndicesRaw[part - 1] = Integer.parseInt(types[1]) - 1;
+                        // Read the texture index
+                        int tIndex = Integer.parseInt(types[1]) - 1;
+                        // Skip face if index not present
+                        if(tIndex >= vertexTextures.size()){
+                            skippedOBJFaces++;
+                            continue;
+                        }
+                        tIndicesRaw[part - 1] = tIndex;
                         // Make sure the normal indices is normalized and add the part to the list
                         if(normalIndices == null)
                             normalIndices = new ArrayList<>();
-                        nIndicesRaw[part - 1] = Integer.parseInt(types[2]) - 1;
+                        // Read normal index
+                        int nIndex = Integer.parseInt(types[2]) - 1;
+                        // Skip face if index not present
+                        if(nIndex >= vertexNormals.size()){
+                            Log.writeln(Log.DEBUG, "IT HAPPENED: " + nIndex + " " + vertexNormals.size());
+                            skippedOBJFaces++;
+                            continue;
+                        }
+                        nIndicesRaw[part - 1] = nIndex;
                     }
                 }
                 // Triangulate the face
@@ -287,6 +335,8 @@ public class Mesh extends WorldEntity implements Renderable {
                 Vector3i[] tIndicesTri = triangulateMultiFaces(tIndicesRaw);
                 Vector3i[] nIndicesTri = triangulateMultiFaces(nIndicesRaw);
                 // Add the indices to the list
+                if(vertexIndices == null)
+                    vertexIndices = new ArrayList<>();
                 for(int triangle = 0; triangle < vIndicesTri.length; triangle++){
                     vertexIndices.add(vIndicesTri[triangle]);
                     if(textureIndices != null)
@@ -294,31 +344,12 @@ public class Mesh extends WorldEntity implements Renderable {
                     if(normalIndices != null)
                         normalIndices.add(nIndicesTri[triangle]);
                 }
-            // Lines starting with vt (texture coordinates)
-            } else if (line.startsWith("vt ")){
-                String[] parts = line.split(" ");
-                if (parts.length == 3) {
-                    float u = Float.parseFloat(parts[1]);
-                    float v = Float.parseFloat(parts[2]);
-                    vertexTextures.add(new Vector3f(u, v, 0));
-                }else{
-                    Log.writeln(Log.WARNING, "Invalid texture line: " + line + "; Expected format: vt u v");
-                }
-            // Lines starting with vn (vertex normals)
-            } else if (line.startsWith("vn ")) {
-                String[] parts = line.split(" ");
-                if (parts.length == 4) {
-                    float x = Float.parseFloat(parts[1]);
-                    float y = Float.parseFloat(parts[2]);
-                    float z = Float.parseFloat(parts[3]);
-                    normalIndices.add(new Vector3i((int)x, (int)y, (int)z));
-                }else{
-                    Log.writeln(Log.WARNING, "Invalid normal line: " + line + "; Expected format: vn x y z");
-                }
             }
         }
+        if(skippedOBJFaces > 0)
+            Log.writeln(Log.WARNING, skippedOBJFaces + " faces skipped due to out of bounds indices");
         if(vertexNormals == null)
-            computeNormals(false);
+            computeNormals(true);
     }
 
     private Vector3i[] triangulateMultiFaces(int[] faceIndices){
@@ -334,9 +365,9 @@ public class Mesh extends WorldEntity implements Renderable {
         return new Matrix4f()
                 .identity()
                 .translate(position)
-                .rotateX((float)Math.toRadians(rotation.x))
                 .rotateY((float)Math.toRadians(rotation.y))
                 .rotateZ((float)Math.toRadians(rotation.z))
+                .rotateX((float)Math.toRadians(rotation.x))
                 .scale(scale);
     }
 
@@ -399,5 +430,11 @@ public class Mesh extends WorldEntity implements Renderable {
     }
     public ArrayList<Vector3i> indices(){
         return vertexIndices;
+    }
+    public int getNumVertexTextures(){
+        return vertexTextures.size();
+    }
+    public int getNumVertexNormals(){
+        return vertexNormals.size();
     }
 }

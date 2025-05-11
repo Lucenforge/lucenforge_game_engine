@@ -20,18 +20,19 @@ public class Window {
     private final Monitor monitor;
     private final long windowID;
     private int width, height;
+    private boolean inFocus;
 
     public Window(Monitor monitor) {
-        this.width = Properties.get("window", "resolution_x", (int)(monitor.width()*0.75f));
-        this.height = Properties.get("window", "resolution_y", (int)(monitor.height()*0.75f));
+        this.width = Properties.getInt("window", "resolution_x", (int)(monitor.width()*0.75f));
+        this.height = Properties.getInt("window", "resolution_y", (int)(monitor.height()*0.75f));
         this.monitor = monitor;
 
         //Set window properties
-        boolean isResizable = Properties.get("window", "resizable", false);
-        boolean isBorderless = Properties.get("window", "borderless", false);
-        boolean isMaximized = Properties.get("window", "maximized", true);
-        boolean isFullscreen = Properties.get("window", "fullscreen", false);
-        int antiAliasingLevel = Properties.get("graphics", "anti-aliasing", 4);
+        boolean isResizable = Properties.getBool("window", "resizable", false);
+        boolean isBorderless = Properties.getBool("window", "borderless", false);
+        boolean isMaximized = Properties.getBool("window", "maximized", true);
+        boolean isFullscreen = Properties.getBool("window", "fullscreen", false);
+        int antiAliasingLevel = Properties.getInt("graphics", "anti-aliasing", 4);
         glfwDefaultWindowHints(); // Configure GLFW
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); //Set initial visibility
         glfwWindowHint(GLFW_MAXIMIZED, isMaximized? GLFW_TRUE : GLFW_FALSE); //Set if the window is maximized todo figure this out
@@ -39,7 +40,7 @@ public class Window {
         glfwWindowHint(GLFW_DECORATED, isBorderless? GLFW_FALSE : GLFW_TRUE); //Set whether it has a frame or not (borderless key here)
         glfwWindowHint(GLFW_SAMPLES, antiAliasingLevel);
 
-        String title = Properties.get("window", "title","LucenForge Engine");
+        String title = Properties.getString("window", "title","LucenForge Engine");
         windowID = glfwCreateWindow(width, height, title, isFullscreen? monitor.id() : NULL, NULL);
         if ( windowID == NULL )
             throw new RuntimeException("Failed to create the GLFW window");
@@ -51,6 +52,11 @@ public class Window {
             this.width = newWidth;
             this.height = newHeight;
             Log.writeln("Window resized to: " + Log.TELEMETRY + newWidth + ", " + newHeight);
+        });
+
+        //Set the focus callback
+        glfwSetWindowFocusCallback(windowID, (window, newIsFocused) -> {
+            inFocus = (window == windowID)? newIsFocused : inFocus;
         });
 
         Log.writeln(Log.SYSTEM, "Window " + title + " started on monitor " + monitor.index() + " (" + monitor.name() + ") with resolution " + width + "x" + height);
@@ -80,6 +86,10 @@ public class Window {
     }
     public static float getAspectRatio(){
         return (float)Engine.getWindow().width() / (float)Engine.getWindow().height();
+    }
+
+    public boolean isInFocus(){
+        return inFocus;
     }
 
     //Set the window's position to the center of the monitor

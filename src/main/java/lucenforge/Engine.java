@@ -33,7 +33,7 @@ public class Engine {
             throw new IllegalStateException("Unable to initialize GLFW");
 
         // Create the window, primary for now until we can select a monitor
-        int monitorIndex = Properties.get("window", "monitor", 0);
+        int monitorIndex = Properties.getInt("window", "monitor", 0);
         window = new Window(Monitors.getIndex(monitorIndex));
         //Set the window position to the center
         window.setCenter(); //todo find better thing for this
@@ -89,8 +89,8 @@ public class Engine {
             glfwSwapBuffers(window.id());
         }
         // Update everything
-        glfwPollEvents();
         Physics.update();
+        glfwPollEvents();
         GraphicsManager.update();
     }
 

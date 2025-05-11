@@ -28,28 +28,28 @@ public class Properties {
     }
 
     // get boolean
-    public static boolean get(String section, String key, Boolean defaultValue) {
+    public static boolean getBool(String section, String key, boolean defaultValue) {
         if(properties.containsKey(key)){
             return Boolean.parseBoolean(properties.get(key));
         }
         return get(section, key, Boolean.class, defaultValue);
     }
     // get integer
-    public static int get(String section, String key, Integer defaultValue) {
+    public static int getInt(String section, String key, int defaultValue) {
         if(properties.containsKey(key)){
             return Integer.parseInt(properties.get(key));
         }
         return get(section, key, Integer.class, defaultValue);
     }
     // get float
-    public static float get(String section, String key, Float defaultValue) {
+    public static float getFloat(String section, String key, float defaultValue) {
         if(properties.containsKey(key)){
             return Float.parseFloat(properties.get(key));
         }
         return get(section, key, Float.class, defaultValue);
     }
     // get string
-    public static String get(String section, String key, String defaultValue) {
+    public static String getString(String section, String key, String defaultValue) {
         if(properties.containsKey(key)){
             return properties.get(key);
         }

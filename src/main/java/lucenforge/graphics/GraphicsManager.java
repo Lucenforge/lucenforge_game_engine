@@ -2,7 +2,7 @@ package lucenforge.graphics;
 
 import lucenforge.files.FileTools;
 import lucenforge.files.Log;
-import lucenforge.graphics.primitives.Mesh;
+import lucenforge.graphics.primitives.mesh.Mesh;
 import lucenforge.output.Monitor;
 import lucenforge.output.Window;
 import lucenforge.files.Properties;
@@ -51,7 +51,7 @@ public class GraphicsManager {
 
         // Init frame time
         // Target FPS: -1 = no limit, 0 = monitor, >0 = that num
-        long targetFPS = Properties.get("graphics", "target_fps", 0);
+        long targetFPS = Properties.getInt("graphics", "target_fps", 0);
         if(targetFPS == -1)
             targetFrameTime = 0;
         else if(targetFPS == 0){
@@ -69,7 +69,7 @@ public class GraphicsManager {
     }
     public static float getAvgFPS(){
         float total = 0;
-        for(Float fps : fpsRecord){
+        for(float fps : fpsRecord){
             total += fps;
         }
         return total/fpsRecord.length;

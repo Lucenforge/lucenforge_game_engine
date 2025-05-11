@@ -1,6 +1,5 @@
-package lucenforge.graphics.primitives;
+package lucenforge.graphics.primitives.mesh;
 
-import lucenforge.graphics.Renderable;
 import lucenforge.graphics.Shader;
 
 import java.util.ArrayList;

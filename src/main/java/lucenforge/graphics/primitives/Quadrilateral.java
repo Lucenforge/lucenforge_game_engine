@@ -1,5 +1,6 @@
 package lucenforge.graphics.primitives;
 
+import lucenforge.graphics.primitives.mesh.Mesh;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
