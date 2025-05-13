@@ -52,68 +52,6 @@ public class MeshFile {
             Mesh.computeNormals(true, fileVertices, fileVertexIndices);
     }
 
-    private void parseFaceOBJ(String line){
-        // Split by space to get each index
-        String[] parts = line.replace("\r","").split(" ");
-        // check for invalid line
-        if (parts.length < 4)
-            Log.writeln(Log.WARNING, "Invalid face line: " + line + "; Expected format: f v1 v2 v3 ...");
-        // get each part for triangulation
-        int[] vIndicesRaw = new int[parts.length - 1];
-        int[] tIndicesRaw = new int[parts.length - 1];
-        int[] nIndicesRaw = new int[parts.length - 1];
-        for (int part = 1; part < parts.length; part++) {
-            String[] types = parts[part].split("/");
-            // Read the vertex index
-            int vIndex = Integer.parseInt(types[0]) - 1;
-            // Skip face if index not present
-            if(vIndex >= fileVertices.size()){
-                skippedOBJFaces++;
-                continue;
-            }
-            vIndicesRaw[part - 1] = vIndex;
-            // If of the format v/t/n, parse the texture and normal indices
-            if(types.length > 1){
-                // Make sure the texture indices is normalized and add the part to the list
-                if(fileTextureIndices == null)
-                    fileTextureIndices = new ArrayList<>();
-                // Read the texture index
-                int tIndex = Integer.parseInt(types[1]) - 1;
-                // Skip face if index not present
-                if(tIndex >= fileVertexTextures.size()){
-                    skippedOBJFaces++;
-                    continue;
-                }
-                tIndicesRaw[part - 1] = tIndex;
-                // Make sure the normal indices is normalized and add the part to the list
-                if(fileNormalIndices == null)
-                    fileNormalIndices = new ArrayList<>();
-                // Read normal index
-                int nIndex = Integer.parseInt(types[2]) - 1;
-                // Skip face if index not present
-                if(nIndex >= fileVertexNormals.size()){
-                    skippedOBJFaces++;
-                    continue;
-                }
-                nIndicesRaw[part - 1] = nIndex;
-            }
-        }
-        // Triangulate the face
-        Vector3i[] vIndicesTri = triangulateMultiFaces(vIndicesRaw);
-        Vector3i[] tIndicesTri = triangulateMultiFaces(tIndicesRaw);
-        Vector3i[] nIndicesTri = triangulateMultiFaces(nIndicesRaw);
-        // Add the indices to the list
-        if(fileVertexIndices == null)
-            fileVertexIndices = new ArrayList<>();
-        for(int triangle = 0; triangle < vIndicesTri.length; triangle++){
-            fileVertexIndices.add(vIndicesTri[triangle]);
-            if(fileTextureIndices != null)
-                fileTextureIndices.add(tIndicesTri[triangle]);
-            if(fileNormalIndices != null)
-                fileNormalIndices.add(nIndicesTri[triangle]);
-        }
-    }
-
     private void parseVertexOBJ(String line){
         String[] parts = line.split(" ");
         if (parts.length == 4) {
@@ -156,17 +94,89 @@ public class MeshFile {
         }
     }
 
-    // Triangulate a face with multiple vertices
-    private Vector3i[] triangulateMultiFaces(int[] faceIndices){
-        Vector3i[] triangles = new Vector3i[faceIndices.length - 2];
-        for (int i = 0; i < faceIndices.length - 2; i++) {
-            triangles[i] = new Vector3i(faceIndices[0], faceIndices[i + 1], faceIndices[i + 2]);
+    private void parseFaceOBJ(String line){
+        // Split by space to get each index
+        String[] parts = line.replace("\r","").split(" ");
+        // check for invalid line
+        if (parts.length < 4)
+            Log.writeln(Log.WARNING, "Invalid face line: " + line + "; Expected format: f v1 v2 v3 ...");
+        // get each part for triangulation
+        Integer[] vIndicesRaw = new Integer[parts.length - 1];
+        Integer[] tIndicesRaw = new Integer[parts.length - 1];
+        Integer[] nIndicesRaw = new Integer[parts.length - 1];
+        for (int part = 1; part < parts.length; part++) {
+            // Split by / to get vertex, texture, and normal indices
+            String[] types = parts[part].split("/");
+            vIndicesRaw[part - 1] = parseVertexIndices(types[0]);
+            tIndicesRaw[part - 1] = parseTextureIndex(types[1]);
+            nIndicesRaw[part - 1] = parseNormalIndices(types[2]);
         }
-        return triangles;
+        // Ensure initialization of proper indices
+        if(fileVertexIndices == null)
+            fileVertexIndices = new ArrayList<>();
+        if(fileTextureIndices == null)
+            fileTextureIndices = new ArrayList<>();
+        if(fileNormalIndices == null)
+            fileNormalIndices = new ArrayList<>();
+        // Triangulate and add the face to the indices list
+        triangulateMultiFaces(vIndicesRaw, fileVertexIndices);
+        triangulateMultiFaces(tIndicesRaw, fileTextureIndices);
+        triangulateMultiFaces(nIndicesRaw, fileNormalIndices);
     }
 
+    private Integer parseVertexIndices(String indices){
+        // Check for empty indices
+        if(!indices.isEmpty()){
+            // Read the vertex index
+            int vIndex = Integer.parseInt(indices) - 1;
+            // Skip face if index not present
+            if(vIndex >= fileVertices.size()){
+                skippedOBJFaces++;
+                return null;
+            }
+            return vIndex;
+        }else
+            return null;
+    }
+    private Integer parseTextureIndex(String indices){
+        // Check for empty texture indices
+        if(!indices.isEmpty()){
+            // Read the texture index
+            int tIndex = Integer.parseInt(indices) - 1;
+            // Skip face if index not present
+            if(tIndex >= fileVertexTextures.size()){
+                skippedOBJFaces++;
+                return null;
+            }
+            return tIndex;
+        }else
+            return null;
+    }
+    private Integer parseNormalIndices(String indices){
+        // Check for empty normal indices
+        if(!indices.isEmpty()){
+            // Read normal index
+            int nIndex = Integer.parseInt(indices) - 1;
+            // Skip face if index not present
+            if(nIndex >= fileVertexNormals.size()){
+                skippedOBJFaces++;
+                return null;
+            }
+            return nIndex;
+        }else
+            return null;
+    }
 
-    // Loads all obj files from the models directory
+    // Triangulate a face with multiple vertices
+    private void triangulateMultiFaces(Integer[] faceIndices, ArrayList<Vector3i> indicesList){
+        for (int i = 0; i < faceIndices.length - 2; i++) {
+            if(faceIndices[0] == null || faceIndices[i + 1] == null || faceIndices[i + 2] == null)
+                continue;
+            indicesList.add(new Vector3i(faceIndices[0], faceIndices[i + 1], faceIndices[i + 2]));
+        }
+    }
+
+    // Loads all obj files from the models directory todo merge this and the next function
     public HashMap<String, Mesh> loadMeshFiles(){
         HashMap<String, Mesh> models = new HashMap<>();
         //Check if the models directory exists, if not, create it
