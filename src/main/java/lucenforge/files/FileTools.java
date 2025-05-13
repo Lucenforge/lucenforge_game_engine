@@ -123,38 +123,6 @@ public class FileTools {
         return shaders;
     }
 
-    // Loads all obj files from the models directory
-    public static HashMap<String, Mesh> loadMeshFiles(){
-        HashMap<String, Mesh> models = new HashMap<>();
-        //Check if the models directory exists, if not, create it
-        createDirectory("src/main/resources/models");
-        //Get list of all files in the models directory with the extension .obj
-        ArrayList<Path> objFiles = getFilesInDir("src/main/resources/models", ".obj");
-        Log.write(Log.SYSTEM, "Models loaded: ");
-        for(Path objFile : objFiles) {
-            String modelName = objFile.getFileName().toString();
-            modelName = modelName.substring(0, modelName.indexOf("."));
-            Mesh mesh = new Mesh();
-            mesh.parseOBJ(readFile(objFile));
-            models.put(modelName, mesh);
-            Log.write(Log.SYSTEM, " (" + modelName + ", v=" + mesh.getNumVerts() + ", f="
-                    + mesh.getNumFaces() + "), ");
-        }
-        Log.writeln("");
-        return models;
-    }
-
-
-    public static Mesh getMeshFile(String name, Mesh.Usage usage) {
-        if (GraphicsManager.masterMeshes.containsKey(name)) {
-            return GraphicsManager.masterMeshes.get(name).init(usage);
-        } else {
-            Log.writeln(Log.ERROR, "Mesh not found: " + name);
-            return null;
-        }
-    }
-
-
     //Prevent instantiation
     public FileTools(){}
 }

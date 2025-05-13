@@ -195,7 +195,7 @@ public class Mesh extends WorldEntity implements Renderable {
         return indexBuffer;
     }
 
-    // Compute normals for the mesh todo check as this might not fully be correct, though that could be the shader
+    // Compute normals for the mesh
     public static ArrayList<Vector3f> computeNormals(boolean smooth, ArrayList<Vector3f> vertices, ArrayList<Vector3i> indices) {
         ArrayList<Vector3f> normals = new ArrayList<>();
         for(Vector3f vertex : vertices){
