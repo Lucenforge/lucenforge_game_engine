@@ -19,8 +19,6 @@ public class GraphicsManager {
 
     // Lookup table for shaders
     public static HashMap<String, Shader> masterShaders;
-    // Lookup table for meshes
-    public static HashMap<String, Mesh> masterMeshes;
     // List of all render layers
     private static final ArrayList<RenderLayer> renderLayers = new ArrayList<>();
 
@@ -47,7 +45,6 @@ public class GraphicsManager {
 
         // Load shaders and meshes
         masterShaders = FileTools.loadShaderFiles();
-        masterMeshes = FileTools.loadMeshFiles();
 
         // Init frame time
         // Target FPS: -1 = no limit, 0 = monitor, >0 = that num

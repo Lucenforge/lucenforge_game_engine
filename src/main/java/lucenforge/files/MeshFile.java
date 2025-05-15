@@ -1,14 +1,11 @@
 package lucenforge.files;
 
-import lucenforge.graphics.GraphicsManager;
 import lucenforge.graphics.primitives.mesh.Mesh;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class MeshFile {
 
@@ -23,13 +20,29 @@ public class MeshFile {
 
     private int skippedOBJFaces = 0;
 
-    public Mesh load(String name){
+    public Mesh load(String name, Mesh.Usage usage){
+        String meshFileContents = loadMeshFile(name);
+        if(meshFileContents == null) {
+            Log.writeln(Log.ERROR, "Mesh file not found: \"" + name + "\"");
+            return null;
+        }
+        parseOBJ(meshFileContents);
+        Log.writeln("\"" + name + "\"" + " obj file loaded");
+
+        return convertToMesh();
+    }
+
+    private Mesh convertToMesh(){
+        Mesh mesh = new Mesh();
+        Hashmap<String, >
+
+        //todo not done yet
         return null;
     }
 
-    // Parse mesh data from an obj string; todo redo everything
+    // Parse mesh data from an obj string
     // Only supports simple v and f right now, no normals or textures
-    public void parseOBJ(String fileContents) {
+    private void parseOBJ(String fileContents) {
         String[] lines = fileContents.split("\n");
         for (String line : lines) {
             // Lines starting with V (vertex)
@@ -49,7 +62,7 @@ public class MeshFile {
         if(skippedOBJFaces > 0)
             Log.writeln(Log.WARNING, skippedOBJFaces + " faces skipped due to out of bounds indices");
         if(fileVertexNormals == null && fileVertices != null)
-            Mesh.computeNormals(true, fileVertices, fileVertexIndices);
+            fileVertexNormals = Mesh.computeNormals(true, fileVertices, fileVertexIndices);
     }
 
     private void parseVertexOBJ(String line){
@@ -108,8 +121,10 @@ public class MeshFile {
             // Split by / to get vertex, texture, and normal indices
             String[] types = parts[part].split("/");
             vIndicesRaw[part - 1] = parseVertexIndices(types[0]);
-            tIndicesRaw[part - 1] = parseTextureIndex(types[1]);
-            nIndicesRaw[part - 1] = parseNormalIndices(types[2]);
+            if(types.length > 1)
+                tIndicesRaw[part - 1] = parseTextureIndex(types[1]);
+            if(types.length > 2)
+                nIndicesRaw[part - 1] = parseNormalIndices(types[2]);
         }
         // Ensure initialization of proper indices
         if(fileVertexIndices == null)
@@ -176,37 +191,18 @@ public class MeshFile {
         }
     }
 
-    // Loads all obj files from the models directory todo merge this and the next function
-    public HashMap<String, Mesh> loadMeshFiles(){
-        HashMap<String, Mesh> models = new HashMap<>();
-        //Check if the models directory exists, if not, create it
-        FileTools.createDirectory("src/main/resources/models");
-        //Get list of all files in the models directory with the extension .obj
-        ArrayList<Path> objFiles = FileTools.getFilesInDir("src/main/resources/models", ".obj");
-        Log.write(Log.SYSTEM, "Models loaded: ");
-        for(Path objFile : objFiles) {
-            String modelName = objFile.getFileName().toString();
-            modelName = modelName.substring(0, modelName.indexOf("."));
-            Mesh mesh = new Mesh();
-            parseOBJ(FileTools.readFile(objFile));
-            models.put(modelName, mesh);
-            Log.write(Log.SYSTEM, " (" + modelName + ", v=" + mesh.getNumVerts() + ", f="
-                    + mesh.getNumFaces() + "), ");
-        }
-        Log.writeln("");
-        return models;
-    }
-
-    // Loads a mesh from the master meshes list
-    public static Mesh getMeshFile(String name, Mesh.Usage usage) {
-        if (GraphicsManager.masterMeshes.containsKey(name)) {
-            return GraphicsManager.masterMeshes.get(name).init(usage);
-        } else {
-            Log.writeln(Log.ERROR, "Mesh not found: " + name);
+    // Loads a mesh file and returns the string for the file
+    private String loadMeshFile(String name) {
+        String modelsDir = "src/main/resources/models";
+        String objFilePath = modelsDir + "/" + name + ".obj";
+        // Ensure the models directory exists
+        FileTools.createDirectory(modelsDir);
+        //check OBJ file existance
+        if(FileTools.doesFileExist(objFilePath)){
+            return FileTools.readFile(objFilePath);
+        }else{
+            Log.writeln(Log.ERROR, "Mesh file not found: \"" + objFilePath + "\"");
             return null;
         }
     }
-
-    // Ensure no instantiation
-    private MeshFile() {}
 }

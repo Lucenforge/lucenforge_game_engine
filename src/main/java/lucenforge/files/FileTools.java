@@ -83,8 +83,13 @@ public class FileTools {
         try {
             return new String(Files.readAllBytes(path));
         } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            Log.writeln(Log.ERROR, "File not found: \"" + path.toString() +"\"");
+            return null;
         }
+    }
+
+    public static boolean doesFileExist(String path){
+        return Files.exists(Paths.get(path));
     }
 
     // Loads all shaders from the shaders directory
