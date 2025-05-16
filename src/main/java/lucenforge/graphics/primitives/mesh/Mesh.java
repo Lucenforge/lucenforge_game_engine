@@ -109,20 +109,24 @@ public class Mesh extends WorldEntity implements Renderable {
         // Vertex attribute pointer (position only)
         glVertexAttribPointer(attribIndex, 3, GL_FLOAT, false, byteStride, offsetBytes);
         glEnableVertexAttribArray(attribIndex++);
+        offsetBytes += 3 * Float.BYTES;
         // Vertex attribute pointer (texture coordinates)
         if (firstVertex.texture != null) {
             // Vertex attribute pointer (texture coordinates)
             glVertexAttribPointer(attribIndex, 2, GL_FLOAT, false, byteStride, offsetBytes);
             glEnableVertexAttribArray(attribIndex++);
+            offsetBytes += 2 * Float.BYTES;
         }
         // Vertex attribute pointer (normals)
         if (firstVertex.normal != null) {
             glVertexAttribPointer(attribIndex, 3, GL_FLOAT, false, byteStride, offsetBytes);
             glEnableVertexAttribArray(attribIndex++);
+            offsetBytes += 3 * Float.BYTES;
         }
 
         if(byteStride != offsetBytes){
-            Log.writeln(Log.WARNING, "Byte offset doesn't equal byte stride in bindVertexAttributes in the Mesh class");
+            Log.writeln(Log.WARNING, "Byte offset (" + offsetBytes + ") "
+                    + "doesn't equal byte stride (" + byteStride + ") in bindVertexAttributes in the Mesh class");
         }
     }
 
@@ -219,7 +223,7 @@ public class Mesh extends WorldEntity implements Renderable {
     // Compute normals for the mesh
     public static ArrayList<Vector3f> computeNormals(boolean smooth, ArrayList<Vector3f> vertices, ArrayList<Vector3i> indices) {
         ArrayList<Vector3f> normals = new ArrayList<>();
-        for(Vector3f vertex : vertices){
+        for(Vector3f ignored : vertices){
             normals.add(new Vector3f());
         }
 
@@ -323,7 +327,7 @@ public class Mesh extends WorldEntity implements Renderable {
     public void setVertices(ArrayList<Vertex> vertices){
         this.vertices = vertices;
     }
-    public void setIndices(ArrayList<Vector3i> faces){
+    public void setFaces(ArrayList<Vector3i> faces){
         this.faces = faces;
     }
 }

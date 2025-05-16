@@ -13,7 +13,7 @@ public class Wireframe extends MeshGroup {
         float width = 0.01f;
         ArrayList<Vertex> vertices = target.vertices();
         ArrayList<Vector3i> faces = target.faces();
-        for(Vector3i face : indexes){
+        for(Vector3i face : faces){
             Line line1 = new Line();
             Line line2 = new Line();
             Line line3 = new Line();

@@ -25,6 +25,8 @@ public class MeshFile {
 
     // Load a mesh file and return a Mesh object
     public Mesh load(String name, Mesh.Usage usage){
+        Log.writeln("Starting to load \"" + name + ".obj\"");
+
         // Load the mesh file
         String meshFileContents = loadMeshFile(name);
         // Check if the file was loaded successfully
@@ -34,38 +36,62 @@ public class MeshFile {
         }
         // Parse the mesh file
         parseOBJ(meshFileContents);
-        Log.writeln("\"" + name + "\"" + " obj file loaded");
+        Mesh mesh = convertToMesh(usage);
+        Log.writeln("\"" + name + "\"" + " obj file loaded successfully");
 
-        return convertToMesh();
+        return mesh;
     }
 
     // Convert the parsed data into a Mesh object
-    private Mesh convertToMesh() {
+    private Mesh convertToMesh(Mesh.Usage usage) {
         Mesh mesh = new Mesh();
         ArrayList<Vertex> vertices = new ArrayList<>();
         ArrayList<Integer> indices = new ArrayList<>();
         Map<Vertex, Integer> vertexMap = new HashMap<>();
 
-        for (Vector3i vertexIndex : fileVertexIndices) {
-            Vector3f position = fileVertices.get(vertexIndex.x);
-            Vector2f texture = (fileVertexTextures != null) ? fileVertexTextures.get(vertexIndex.y) : null;
-            Vector3f normal = (fileVertexNormals != null) ? fileVertexNormals.get(vertexIndex.z) : null;
+        for (int i = 0; i < fileVertexIndices.size(); i++) {
+            Vector3i vertexIndex = fileVertexIndices.get(i);
+            Vector3f[] positions = new Vector3f[3];
+            positions[0] = fileVertices.get(vertexIndex.x);
+            positions[1] = fileVertices.get(vertexIndex.y);
+            positions[2] = fileVertices.get(vertexIndex.z);
 
-            Vertex v = new Vertex(position, texture, normal);
+            Vector3i textureIndex = fileTextureIndices != null ? fileTextureIndices.get(i) : null;
+            Vector2f[] textures = new Vector2f[3];
+            textures[0] = (textureIndex != null) ? fileVertexTextures.get(textureIndex.x) : null;
+            textures[1] = (textureIndex != null) ? fileVertexTextures.get(textureIndex.y) : null;
+            textures[2] = (textureIndex != null) ? fileVertexTextures.get(textureIndex.z) : null;
 
-            Integer existingIndex = vertexMap.get(v);
-            if (existingIndex != null) {
-                indices.add(existingIndex);
-            } else {
-                int newIndex = vertices.size();
-                vertices.add(v);
-                vertexMap.put(v, newIndex);
-                indices.add(newIndex);
+            Vector3i normalIndex = fileNormalIndices != null ? fileNormalIndices.get(i) : null;
+            Vector3f[] normals = new Vector3f[3];
+            normals[0] = (normalIndex != null) ? fileVertexNormals.get(normalIndex.x) : null;
+            normals[1] = (normalIndex != null) ? fileVertexNormals.get(normalIndex.y) : null;
+            normals[2] = (normalIndex != null) ? fileVertexNormals.get(normalIndex.z) : null;
+
+            for(int vIndex = 0; vIndex < 3; vIndex++){
+                Vertex v = new Vertex(positions[vIndex], textures[vIndex], normals[vIndex]);
+                Integer existingVertex = vertexMap.get(v);
+                if (existingVertex != null) {
+                    indices.add(existingVertex);
+                } else {
+                    int newIndex = vertices.size();
+                    vertices.add(v);
+                    vertexMap.put(v, newIndex);
+                    indices.add(newIndex);
+                }
             }
         }
 
-        mesh.setVertices(vertices);
-        mesh.setIndices(indices);
+        if (indices.size() % 3 != 0) {
+            Log.writeln(Log.WARNING, "Index list is not divisible by 3 (" + indices.size() + "). Dropping incomplete triangle.");
+        }
+
+        ArrayList<Vector3i> faces = new ArrayList<>(indices.size() / 3);
+        for(int i = 0; i < indices.size(); i += 3) {
+            faces.add(new Vector3i(indices.get(i), indices.get(i + 1), indices.get(i + 2)));
+        }
+
+        mesh.init(vertices, faces, usage);
         return mesh;
     }
 
@@ -144,23 +170,28 @@ public class MeshFile {
             Log.writeln(Log.WARNING, "Invalid face line: " + line + "; Expected format: f v1 v2 v3 ...");
         // get each part for triangulation
         Integer[] vIndicesRaw = new Integer[parts.length - 1];
-        Integer[] tIndicesRaw = new Integer[parts.length - 1];
-        Integer[] nIndicesRaw = new Integer[parts.length - 1];
+        Integer[] tIndicesRaw = null;
+        Integer[] nIndicesRaw = null;
         for (int part = 1; part < parts.length; part++) {
             // Split by / to get vertex, texture, and normal indices
             String[] types = parts[part].split("/");
             vIndicesRaw[part - 1] = parseVertexIndices(types[0]);
-            if(types.length > 1)
+            if(types.length > 1) {
+                if(tIndicesRaw == null)
+                    tIndicesRaw = new Integer[parts.length - 1];
                 tIndicesRaw[part - 1] = parseTextureIndex(types[1]);
-            if(types.length > 2)
+            }
+            if(types.length > 2) {
+                if(nIndicesRaw == null)
+                    nIndicesRaw = new Integer[parts.length - 1];
                 nIndicesRaw[part - 1] = parseNormalIndices(types[2]);
+            }
         }
         // Ensure initialization of proper indices
-        if(fileVertexIndices == null)
-            fileVertexIndices = new ArrayList<>();
-        if(fileTextureIndices == null)
+        fileVertexIndices = new ArrayList<>();
+        if(tIndicesRaw != null)
             fileTextureIndices = new ArrayList<>();
-        if(fileNormalIndices == null)
+        if(nIndicesRaw != null)
             fileNormalIndices = new ArrayList<>();
         // Triangulate and add the face to the indices list
         triangulateMultiFaces(vIndicesRaw, fileVertexIndices);
@@ -213,6 +244,8 @@ public class MeshFile {
 
     // Triangulate a face with multiple vertices
     private void triangulateMultiFaces(Integer[] faceIndices, ArrayList<Vector3i> indicesList){
+        if(faceIndices == null)
+            return;
         for (int i = 0; i < faceIndices.length - 2; i++) {
             if(faceIndices[0] == null || faceIndices[i + 1] == null || faceIndices[i + 2] == null)
                 continue;

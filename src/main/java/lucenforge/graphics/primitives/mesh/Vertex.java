@@ -7,9 +7,9 @@ import java.util.Objects;
 
 public class Vertex {
 
-    Vector3f position;
-    Vector2f texture;
-    Vector3f normal;
+    public Vector3f position;
+    public Vector2f texture;
+    public Vector3f normal;
 
     public Vertex(Vector3f position){
         this(position, null, null);
