@@ -1,11 +1,14 @@
 package lucenforge.files;
 
 import lucenforge.graphics.primitives.mesh.Mesh;
+import lucenforge.graphics.primitives.mesh.Vertex;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MeshFile {
 
@@ -20,24 +23,50 @@ public class MeshFile {
 
     private int skippedOBJFaces = 0;
 
+    // Load a mesh file and return a Mesh object
     public Mesh load(String name, Mesh.Usage usage){
+        // Load the mesh file
         String meshFileContents = loadMeshFile(name);
+        // Check if the file was loaded successfully
         if(meshFileContents == null) {
             Log.writeln(Log.ERROR, "Mesh file not found: \"" + name + "\"");
             return null;
         }
+        // Parse the mesh file
         parseOBJ(meshFileContents);
         Log.writeln("\"" + name + "\"" + " obj file loaded");
 
         return convertToMesh();
     }
 
-    private Mesh convertToMesh(){
+    // Convert the parsed data into a Mesh object
+    private Mesh convertToMesh() {
         Mesh mesh = new Mesh();
-        Hashmap<String, >
+        ArrayList<Vertex> vertices = new ArrayList<>();
+        ArrayList<Integer> indices = new ArrayList<>();
+        Map<Vertex, Integer> vertexMap = new HashMap<>();
 
-        //todo not done yet
-        return null;
+        for (Vector3i vertexIndex : fileVertexIndices) {
+            Vector3f position = fileVertices.get(vertexIndex.x);
+            Vector2f texture = (fileVertexTextures != null) ? fileVertexTextures.get(vertexIndex.y) : null;
+            Vector3f normal = (fileVertexNormals != null) ? fileVertexNormals.get(vertexIndex.z) : null;
+
+            Vertex v = new Vertex(position, texture, normal);
+
+            Integer existingIndex = vertexMap.get(v);
+            if (existingIndex != null) {
+                indices.add(existingIndex);
+            } else {
+                int newIndex = vertices.size();
+                vertices.add(v);
+                vertexMap.put(v, newIndex);
+                indices.add(newIndex);
+            }
+        }
+
+        mesh.setVertices(vertices);
+        mesh.setIndices(indices);
+        return mesh;
     }
 
     // Parse mesh data from an obj string

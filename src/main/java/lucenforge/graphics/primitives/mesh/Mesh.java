@@ -34,31 +34,29 @@ public class Mesh extends WorldEntity implements Renderable {
     private int eboLength;
 
     // Vertexes
-    private ArrayList<Vector3f> vertices;
-    private ArrayList<Vector2f> vertexTextures;
-    private ArrayList<Vector3f> vertexNormals;
+    private ArrayList<Vertex> vertices;
     // Indices
-    private ArrayList<Vector3i> vertexIndices;
-    private ArrayList<Vector3i> textureIndices;
-    private ArrayList<Vector3i> normalIndices;
+    private ArrayList<Vector3i> faces;
 
     private Usage usage;
     private Shader shader;
-    private HashMap<String, ShaderParameter> params = new HashMap<>();
+    private final HashMap<String, ShaderParameter> params = new HashMap<>();
 
     FloatBuffer mappedBuffer = null;
 
-    public Mesh init(ArrayList<Vector3f> vertices, ArrayList<Vector3i> indices, Usage usage) {
-        init(vertices, indices, vertexNormals, usage);
-        return init(usage);
-    }
-    public Mesh init(ArrayList<Vector3f> vertices, ArrayList<Vector3i> indices, ArrayList<Vector3f> normals, Usage usage) {
+    public Mesh init(ArrayList<Vertex> vertices, ArrayList<Vector3i> indices, Usage usage) {
         this.vertices = vertices;
-        this.vertexIndices = indices;
-        this.vertexNormals = normals;
+        this.faces = indices;
         return init(usage);
     }
     public Mesh init(Usage usage) {
+
+        // Fail gracefully if no vertices are provided
+        if (vertices.isEmpty()) {
+            Log.writeln(Log.ERROR, "Cannot initialize mesh with no vertices.");
+            return this;
+        }
+
         this.usage = usage;
 
         // Generate VAO, VBO, and EBO
@@ -71,8 +69,10 @@ public class Mesh extends WorldEntity implements Renderable {
         // Vertex buffer
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         // Allocate buffer space
-        int stride = vertexNormals != null? 6 : 3; // 3 floats per vertex, 3 for normals
-        glBufferData(GL_ARRAY_BUFFER, (long) vertices.size() * stride * Float.BYTES, usage.glID);
+        Vertex firstVertex = vertices.get(0);
+        int floatStride = firstVertex.getFloatStride(); // 3 floats per vertex, 3 for normals
+        int byteStride = floatStride * Float.BYTES;
+        glBufferData(GL_ARRAY_BUFFER, (long) vertices.size() * byteStride, usage.glID);
         // If usage is STREAM, use mapped buffer
         if (usage == Usage.STREAM) {
             ByteBuffer mapBuffer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -93,14 +93,7 @@ public class Mesh extends WorldEntity implements Renderable {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, compileEBO(), GL_STATIC_DRAW);
 
-        // Vertex attribute pointer (position only)
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, stride * Float.BYTES, 0);
-        glEnableVertexAttribArray(0);
-        // Vertex attribute pointer (normals)
-        if (vertexNormals != null) {
-            glVertexAttribPointer(1, 3, GL_FLOAT, false, stride * Float.BYTES, 3 * Float.BYTES);
-            glEnableVertexAttribArray(1);
-        }
+        bindVertexAttributes(byteStride, firstVertex);
 
         // Unbind VBO (safe), but DO NOT unbind EBO while VAO is still bound
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -109,7 +102,31 @@ public class Mesh extends WorldEntity implements Renderable {
         return this;
     }
 
-    public void updateVerts(ArrayList<Vector3f> vertices) {
+    private void bindVertexAttributes(int byteStride, Vertex firstVertex) {
+        int offsetBytes = 0;
+        int attribIndex = 0;
+
+        // Vertex attribute pointer (position only)
+        glVertexAttribPointer(attribIndex, 3, GL_FLOAT, false, byteStride, offsetBytes);
+        glEnableVertexAttribArray(attribIndex++);
+        // Vertex attribute pointer (texture coordinates)
+        if (firstVertex.texture != null) {
+            // Vertex attribute pointer (texture coordinates)
+            glVertexAttribPointer(attribIndex, 2, GL_FLOAT, false, byteStride, offsetBytes);
+            glEnableVertexAttribArray(attribIndex++);
+        }
+        // Vertex attribute pointer (normals)
+        if (firstVertex.normal != null) {
+            glVertexAttribPointer(attribIndex, 3, GL_FLOAT, false, byteStride, offsetBytes);
+            glEnableVertexAttribArray(attribIndex++);
+        }
+
+        if(byteStride != offsetBytes){
+            Log.writeln(Log.WARNING, "Byte offset doesn't equal byte stride in bindVertexAttributes in the Mesh class");
+        }
+    }
+
+    public void updateVerts(ArrayList<Vertex> vertices) {
         if (vbo == 0 || vertices == null) {
             Log.writeln(Log.ERROR, "updateVerts called before init!");
             return;
@@ -165,18 +182,22 @@ public class Mesh extends WorldEntity implements Renderable {
 
     // Compile vertices and normals from Vector3f array to float array
     private float[] compileVBO() {
-        int stride = vertexNormals != null? 6 : 3; // 3 floats per vertex, 3 for normals
+        int stride = vertices.get(0).getFloatStride();
         float[] vertexBuffer = new float[vertices.size() * stride];
         // For every vertex, add the position and normal (if present) to the buffer
         for (int i = 0; i < vertices.size(); i++) {
             int base = i * stride;
-            vertexBuffer[base] = vertices.get(i).x;
-            vertexBuffer[base + 1] = vertices.get(i).y;
-            vertexBuffer[base + 2] = vertices.get(i).z;
-            if (vertexNormals != null) {
-                vertexBuffer[base + 3] = vertexNormals.get(i).x;
-                vertexBuffer[base + 4] = vertexNormals.get(i).y;
-                vertexBuffer[base + 5] = vertexNormals.get(i).z;
+            vertexBuffer[base    ] = vertices.get(i).position.x;
+            vertexBuffer[base + 1] = vertices.get(i).position.y;
+            vertexBuffer[base + 2] = vertices.get(i).position.z;
+            if (vertices.get(i).texture != null) {
+                vertexBuffer[base + 3] = vertices.get(i).texture.x;
+                vertexBuffer[base + 4] = vertices.get(i).texture.y;
+            }
+            if (vertices.get(i).normal != null) {
+                vertexBuffer[base + 5] = vertices.get(i).normal.x;
+                vertexBuffer[base + 6] = vertices.get(i).normal.y;
+                vertexBuffer[base + 7] = vertices.get(i).normal.z;
             }
         }
         return vertexBuffer;
@@ -184,12 +205,12 @@ public class Mesh extends WorldEntity implements Renderable {
 
     // Compile indices from Vector3i array to int array
     private int[] compileEBO(){
-        int[] indexBuffer = new int[vertexIndices.size() * 3];
+        int[] indexBuffer = new int[faces.size() * 3];
         // For every index, add the vertex indices to the buffer
-        for (int i = 0; i < vertexIndices.size(); i++) {
-            indexBuffer[i * 3    ] = vertexIndices.get(i).x;
-            indexBuffer[i * 3 + 1] = vertexIndices.get(i).y;
-            indexBuffer[i * 3 + 2] = vertexIndices.get(i).z;
+        for (int i = 0; i < faces.size(); i+=3) {
+            indexBuffer[i] = faces.get(i).x;
+            indexBuffer[i + 1] = faces.get(i).y;
+            indexBuffer[i + 2] = faces.get(i).z;
         }
         eboLength = indexBuffer.length;
         return indexBuffer;
@@ -293,22 +314,16 @@ public class Mesh extends WorldEntity implements Renderable {
     }
 
     // Getters for vertices and indices
-    public int getNumVerts(){
-        return vertices.size(); // Each vertex has 3 components (x, y, z)
-    }
-    public int getNumFaces(){
-        return vertexIndices.size(); // Each face is a triangle, so 3 indices per face
-    }
-    public ArrayList<Vector3f> vertices(){
+    public ArrayList<Vertex> vertices(){
         return vertices;
     }
-    public ArrayList<Vector3i> indices(){
-        return vertexIndices;
+    public ArrayList<Vector3i> faces(){
+        return faces;
     }
-    public int getNumVertexTextures(){
-        return vertexTextures.size();
+    public void setVertices(ArrayList<Vertex> vertices){
+        this.vertices = vertices;
     }
-    public int getNumVertexNormals(){
-        return vertexNormals.size();
+    public void setIndices(ArrayList<Vector3i> faces){
+        this.faces = faces;
     }
 }
