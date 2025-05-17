@@ -7,8 +7,19 @@ target/
 .mvn/wrapper/maven-wrapper.properties
 
 # IntelliJ IDEA
-.idea/
-*.iml
+# Exclude machine-specific or volatile files
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+# Allow shared project settings
+!.idea/modules.xml
+!.idea/misc.xml
+!.idea/compiler.xml
+!.idea/libraries/
+!.idea/artifacts/
 
 # VS Code
 .vscode/

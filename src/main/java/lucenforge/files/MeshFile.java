@@ -25,7 +25,7 @@ public class MeshFile {
 
     // Load a mesh file and return a Mesh object
     public Mesh load(String name, Mesh.Usage usage){
-        Log.writeln("Starting to load \"" + name + ".obj\"");
+        Log.writeln("Loading \"" + name + ".obj\"");
 
         // Load the mesh file
         String meshFileContents = loadMeshFile(name);
