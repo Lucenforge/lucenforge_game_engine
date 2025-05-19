@@ -32,9 +32,10 @@ public class Vertex {
     public boolean equals(Object obj) {
         if (!(obj instanceof Vertex other)) return false;
         if (this == obj) return true;
-        return position.equals(other.position) &&
-                texture.equals(other.texture) &&
-                normal.equals(other.normal);
+        boolean pos = (position == null && other.position == null) || (Objects.equals(position, other.position));
+        boolean tex = (texture == null && other.texture == null) || (Objects.equals(texture, other.texture));
+        boolean nor = (normal == null && other.normal == null) || (Objects.equals(normal, other.normal));
+        return pos && tex && nor;
     }
 
     @Override

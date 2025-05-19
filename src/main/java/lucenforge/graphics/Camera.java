@@ -23,15 +23,15 @@ public class Camera extends WorldEntity {
         if (shouldLookAtTarget) {
             // Look at object
             if(lookAtTarget == null)
-                return new Matrix4f().lookAt(position, lookAtPos, new Vector3f(0, 1, 0));
+                return new Matrix4f().lookAt(position(), lookAtPos, new Vector3f(0, 1, 0));
             // Look at position
             else
-                return new Matrix4f().lookAt(position, lookAtTarget.position(), new Vector3f(0, 1, 0));
+                return new Matrix4f().lookAt(position(), lookAtTarget.position(), new Vector3f(0, 1, 0));
         }else{
             // Look in direction
             return new Matrix4f()
                 .lookAlong(lookDirection, new Vector3f(0, 1, 0))
-                .translate(-position.x, -position.y, -position.z);
+                .translate(-position().x, -position().y, -position().z);
         }
     }
 
@@ -60,7 +60,7 @@ public class Camera extends WorldEntity {
 //        Log.writeln(Log.DEBUG, "Camera: rotate before: " + rotation + " " + this.rotation);
         super.rotate(rotation);
 //        Log.writeln(Log.DEBUG, "Camera: rotate after: " + rotation + " " + this.rotation);
-        lookToward(this.rotation);
+        lookToward(this.rotation());
     }
 
     @Override
@@ -68,7 +68,7 @@ public class Camera extends WorldEntity {
 //        Log.writeln(Log.DEBUG, "Camera: set rotation before: " + rotation + " " + this.rotation);
         super.setRotation(rotation);
 //        Log.writeln(Log.DEBUG, "Camera: set rotation after: " + rotation + " " + this.rotation);
-        lookToward(this.rotation);
+        lookToward(this.rotation());
     }
 
     public void lookToward(Vector3f angles){

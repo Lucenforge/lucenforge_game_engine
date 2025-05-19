@@ -107,19 +107,19 @@ public class Mesh extends WorldEntity implements Renderable {
         int attribIndex = 0;
 
         // Vertex attribute pointer (position only)
-        glVertexAttribPointer(attribIndex, 3, GL_FLOAT, false, byteStride, offsetBytes);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, byteStride, offsetBytes);
         glEnableVertexAttribArray(attribIndex++);
         offsetBytes += 3 * Float.BYTES;
         // Vertex attribute pointer (texture coordinates)
         if (firstVertex.texture != null) {
             // Vertex attribute pointer (texture coordinates)
-            glVertexAttribPointer(attribIndex, 2, GL_FLOAT, false, byteStride, offsetBytes);
+            glVertexAttribPointer(1, 2, GL_FLOAT, false, byteStride, offsetBytes);
             glEnableVertexAttribArray(attribIndex++);
             offsetBytes += 2 * Float.BYTES;
         }
         // Vertex attribute pointer (normals)
         if (firstVertex.normal != null) {
-            glVertexAttribPointer(attribIndex, 3, GL_FLOAT, false, byteStride, offsetBytes);
+            glVertexAttribPointer(2, 3, GL_FLOAT, false, byteStride, offsetBytes);
             glEnableVertexAttribArray(attribIndex++);
             offsetBytes += 3 * Float.BYTES;
         }
@@ -211,26 +211,27 @@ public class Mesh extends WorldEntity implements Renderable {
     private int[] compileEBO(){
         int[] indexBuffer = new int[faces.size() * 3];
         // For every index, add the vertex indices to the buffer
-        for (int i = 0; i < faces.size(); i+=3) {
-            indexBuffer[i] = faces.get(i).x;
-            indexBuffer[i + 1] = faces.get(i).y;
-            indexBuffer[i + 2] = faces.get(i).z;
+        for (int i = 0; i < faces.size(); i++) {
+            Vector3i face = faces.get(i);
+            indexBuffer[i * 3    ] = face.x;
+            indexBuffer[i * 3 + 1] = face.y;
+            indexBuffer[i * 3 + 2] = face.z;
         }
         eboLength = indexBuffer.length;
         return indexBuffer;
     }
 
     // Compute normals for the mesh
-    public static ArrayList<Vector3f> computeNormals(boolean smooth, ArrayList<Vector3f> vertices, ArrayList<Vector3i> indices) {
+    public void computeNormals(boolean smooth) {
         ArrayList<Vector3f> normals = new ArrayList<>();
-        for(Vector3f ignored : vertices){
+        for(Vertex ignored : vertices){
             normals.add(new Vector3f());
         }
 
-        for (Vector3i face : indices) {
-            Vector3f v1 = vertices.get(face.x);
-            Vector3f v2 = vertices.get(face.y);
-            Vector3f v3 = vertices.get(face.z);
+        for (Vector3i face : faces) {
+            Vector3f v1 = vertices.get(face.x).position;
+            Vector3f v2 = vertices.get(face.y).position;
+            Vector3f v3 = vertices.get(face.z).position;
 
             Vector3f edge1 = v2.sub(v1, new Vector3f());
             Vector3f edge2 = v3.sub(v1, new Vector3f());
@@ -256,18 +257,23 @@ public class Mesh extends WorldEntity implements Renderable {
             }
         }
 
-        return normals;
+        for(int i = 0; i < vertices.size(); i++){
+            if (vertices.get(i).normal == null) {
+                vertices.get(i).normal = new Vector3f();
+            }
+            vertices.get(i).normal.set(normals.get(i));
+        }
     }
 
     // Get Model Matrix for rendering
     public Matrix4f getModelMatrix() {
         return new Matrix4f()
                 .identity()
-                .translate(position)
-                .rotateY((float)Math.toRadians(rotation.y))
-                .rotateZ((float)Math.toRadians(rotation.z))
-                .rotateX((float)Math.toRadians(rotation.x))
-                .scale(scale);
+                .translate(position())
+                .rotateY((float)Math.toRadians(rotation().y))
+                .rotateZ((float)Math.toRadians(rotation().z))
+                .rotateX((float)Math.toRadians(rotation().x))
+                .scale(scale());
     }
 
     // Cleanup method

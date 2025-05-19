@@ -37,7 +37,10 @@ public class MeshFile {
         // Parse the mesh file
         parseOBJ(meshFileContents);
         Mesh mesh = convertToMesh(usage);
-        Log.writeln("\"" + name + "\"" + " obj file loaded successfully");
+        // If the normals aren't there, create them
+        if(mesh.vertices().get(0).normal == null && fileVertexNormals != null)
+            mesh.computeNormals(false);
+        Log.writeln("\"" + name + "\"" + " obj file loaded successfully (f: "+mesh.faces().size()+", v: "+mesh.vertices().size()+")");
 
         return mesh;
     }
@@ -96,7 +99,6 @@ public class MeshFile {
     }
 
     // Parse mesh data from an obj string
-    // Only supports simple v and f right now, no normals or textures
     private void parseOBJ(String fileContents) {
         String[] lines = fileContents.split("\n");
         for (String line : lines) {
@@ -116,8 +118,6 @@ public class MeshFile {
         }
         if(skippedOBJFaces > 0)
             Log.writeln(Log.WARNING, skippedOBJFaces + " faces skipped due to out of bounds indices");
-        if(fileVertexNormals == null && fileVertices != null)
-            fileVertexNormals = Mesh.computeNormals(true, fileVertices, fileVertexIndices);
     }
 
     private void parseVertexOBJ(String line){
@@ -188,10 +188,11 @@ public class MeshFile {
             }
         }
         // Ensure initialization of proper indices
-        fileVertexIndices = new ArrayList<>();
-        if(tIndicesRaw != null)
+        if(fileVertexIndices == null)
+            fileVertexIndices = new ArrayList<>();
+        if(tIndicesRaw != null && fileTextureIndices == null)
             fileTextureIndices = new ArrayList<>();
-        if(nIndicesRaw != null)
+        if(nIndicesRaw != null && fileNormalIndices == null)
             fileNormalIndices = new ArrayList<>();
         // Triangulate and add the face to the indices list
         triangulateMultiFaces(vIndicesRaw, fileVertexIndices);

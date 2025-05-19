@@ -9,6 +9,7 @@ public class MeshGroup extends Mesh{
     protected final ArrayList<Mesh> meshes = new ArrayList<>();
 
     public void addMesh(Mesh mesh){
+        mesh.setParent(this);
         meshes.add(mesh);
     }
 
