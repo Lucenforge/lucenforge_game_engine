@@ -93,7 +93,7 @@ public class Mesh extends WorldEntity implements Renderable {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, compileEBO(), GL_STATIC_DRAW);
 
-        bindVertexAttributes(byteStride, firstVertex);
+        bindVertexAttributes(byteStride);
 
         // Unbind VBO (safe), but DO NOT unbind EBO while VAO is still bound
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -102,24 +102,23 @@ public class Mesh extends WorldEntity implements Renderable {
         return this;
     }
 
-    private void bindVertexAttributes(int byteStride, Vertex firstVertex) {
+    private void bindVertexAttributes(int byteStride) {
         int offsetBytes = 0;
         int attribIndex = 0;
 
-        // Vertex attribute pointer (position only)
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, byteStride, offsetBytes);
+        // Position (always present)
+        glVertexAttribPointer(attribIndex, 3, GL_FLOAT, false, byteStride, offsetBytes);
         glEnableVertexAttribArray(attribIndex++);
         offsetBytes += 3 * Float.BYTES;
-        // Vertex attribute pointer (texture coordinates)
-        if (firstVertex.texture != null) {
-            // Vertex attribute pointer (texture coordinates)
-            glVertexAttribPointer(1, 2, GL_FLOAT, false, byteStride, offsetBytes);
+
+        if (vertices.get(0).texture != null) {
+            glVertexAttribPointer(attribIndex, 2, GL_FLOAT, false, byteStride, offsetBytes);
             glEnableVertexAttribArray(attribIndex++);
             offsetBytes += 2 * Float.BYTES;
         }
-        // Vertex attribute pointer (normals)
-        if (firstVertex.normal != null) {
-            glVertexAttribPointer(2, 3, GL_FLOAT, false, byteStride, offsetBytes);
+
+        if (vertices.get(0).normal != null) {
+            glVertexAttribPointer(attribIndex, 3, GL_FLOAT, false, byteStride, offsetBytes);
             glEnableVertexAttribArray(attribIndex++);
             offsetBytes += 3 * Float.BYTES;
         }
@@ -191,17 +190,18 @@ public class Mesh extends WorldEntity implements Renderable {
         // For every vertex, add the position and normal (if present) to the buffer
         for (int i = 0; i < vertices.size(); i++) {
             int base = i * stride;
-            vertexBuffer[base    ] = vertices.get(i).position.x;
-            vertexBuffer[base + 1] = vertices.get(i).position.y;
-            vertexBuffer[base + 2] = vertices.get(i).position.z;
+            int offset = 0;
+            vertexBuffer[base + offset++] = vertices.get(i).position.x;
+            vertexBuffer[base + offset++] = vertices.get(i).position.y;
+            vertexBuffer[base + offset++] = vertices.get(i).position.z;
             if (vertices.get(i).texture != null) {
-                vertexBuffer[base + 3] = vertices.get(i).texture.x;
-                vertexBuffer[base + 4] = vertices.get(i).texture.y;
+                vertexBuffer[base + offset++] = vertices.get(i).texture.x;
+                vertexBuffer[base + offset++] = vertices.get(i).texture.y;
             }
             if (vertices.get(i).normal != null) {
-                vertexBuffer[base + 5] = vertices.get(i).normal.x;
-                vertexBuffer[base + 6] = vertices.get(i).normal.y;
-                vertexBuffer[base + 7] = vertices.get(i).normal.z;
+                vertexBuffer[base + offset++] = vertices.get(i).normal.x;
+                vertexBuffer[base + offset++] = vertices.get(i).normal.y;
+                vertexBuffer[base + offset  ] = vertices.get(i).normal.z;
             }
         }
         return vertexBuffer;
@@ -258,10 +258,7 @@ public class Mesh extends WorldEntity implements Renderable {
         }
 
         for(int i = 0; i < vertices.size(); i++){
-            if (vertices.get(i).normal == null) {
-                vertices.get(i).normal = new Vector3f();
-            }
-            vertices.get(i).normal.set(normals.get(i));
+            vertices.get(i).normal = new Vector3f(normals.get(i).normalize());
         }
     }
 
@@ -289,6 +286,10 @@ public class Mesh extends WorldEntity implements Renderable {
 
     // Shader setters and getters
     public <T> void setParam(String paramName, T value){
+        if(shader == null) {
+            Log.writeln(Log.ERROR, "Shader has not been set yet, skipping setParam for: " + paramName);
+            return;
+        }
         if (!params.containsKey(paramName)) {
             ShaderParameter paramFromShader = shader.getParam(paramName);
             if(paramFromShader == null) { //Warning shows up in the function above

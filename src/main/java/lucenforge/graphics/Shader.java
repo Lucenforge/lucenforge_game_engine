@@ -104,7 +104,7 @@ public class Shader {
         if(reqUniforms.containsKey(name))
             return reqUniforms.get(name);
         else{
-            Log.writeln(Log.ERROR, name + " is not a required parameter for shader " + this.name);
+            Log.writeln(Log.WARNING, "Not retrieving " + name + " as it's not a required parameter for shader " + this.name);
             return null;
         }
     }
@@ -112,7 +112,7 @@ public class Shader {
         if(reqUniforms.containsKey(name))
             reqUniforms.put(name, param);
         else{
-            Log.writeln(Log.ERROR, name + " is not a required parameter for shader " + this.name);
+            Log.writeln(Log.WARNING, "Skipping setting " + name + " as it's not a required parameter for shader " + this.name);
         }
     }
 }

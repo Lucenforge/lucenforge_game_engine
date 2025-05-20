@@ -25,22 +25,24 @@ public class MeshFile {
 
     // Load a mesh file and return a Mesh object
     public Mesh load(String name, Mesh.Usage usage){
-        Log.writeln("Loading \"" + name + ".obj\"");
+        Log.write("Loading \"" + name + ".obj\"");
 
         // Load the mesh file
         String meshFileContents = loadMeshFile(name);
         // Check if the file was loaded successfully
         if(meshFileContents == null) {
-            Log.writeln(Log.ERROR, "Mesh file not found: \"" + name + "\"");
+            Log.writeln(Log.ERROR, " - Mesh file not found");
             return null;
         }
         // Parse the mesh file
         parseOBJ(meshFileContents);
         Mesh mesh = convertToMesh(usage);
         // If the normals aren't there, create them
-        if(mesh.vertices().get(0).normal == null && fileVertexNormals != null)
-            mesh.computeNormals(false);
-        Log.writeln("\"" + name + "\"" + " obj file loaded successfully (f: "+mesh.faces().size()+", v: "+mesh.vertices().size()+")");
+        if(mesh.vertices().get(0).normal == null || fileVertexNormals == null) {
+            mesh.computeNormals(true);
+            Log.write(" (computed normals)");
+        }
+        Log.writeln(" - loaded successfully (f: "+mesh.faces().size()+", v: "+mesh.vertices().size()+")");
 
         return mesh;
     }
