@@ -1,4 +1,4 @@
-package lucenforge.graphics;
+package lucenforge.graphics.shaders;
 
 import lucenforge.files.Log;
 
@@ -13,13 +13,14 @@ public class Shader {
     private final int programId;
     // A list of required uniforms (parameters) that are needed for this shader
     private final HashMap<String, ShaderParameter> reqUniforms = new HashMap<>();
+    private final HashMap<VertexAttributeType, Integer> reqVertexAttributes = new HashMap<>();
 
     public Shader(String name, String vertexSrc, String fragmentSrc) {
         this.name = name;
         int vertexShader = compileShader(GL_VERTEX_SHADER, vertexSrc);
         int fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSrc);
 
-        findReqUniforms(vertexSrc, fragmentSrc);
+        findRequirements(vertexSrc, fragmentSrc);
 
         programId = glCreateProgram();
         glAttachShader(programId, vertexShader);
@@ -34,6 +35,7 @@ public class Shader {
         glDeleteShader(fragmentShader);
     }
 
+    // Compile a shader of the given type (vertex or fragment)
     private int compileShader(int type, String source) {
         int shader = glCreateShader(type);
         glShaderSource(shader, source);
@@ -44,6 +46,7 @@ public class Shader {
         return shader;
     }
 
+    // Check if all required parameters are set
     public boolean areParametersSet() {
         boolean allGood = true;
         for (ShaderParameter shaderParameter : reqUniforms.values()) {
@@ -57,17 +60,23 @@ public class Shader {
         return allGood;
     }
 
+    // Check where the attribute is located
+    public Integer getAttributeLocation(VertexAttributeType type) {
+        return reqVertexAttributes.getOrDefault(type, null);
+    }
+
     // Check if uniform is required
     public boolean isUniformRequired(String name) {
         return reqUniforms.containsKey(name);
     }
 
     // find required uniforms
-    private void findReqUniforms(String vertexSrc, String fragmentSrc){
+    private void findRequirements(String vertexSrc, String fragmentSrc){
         String fullSrc = vertexSrc + "\n" + fragmentSrc;
         String[] lines = fullSrc.split("\n");
         for (String line : lines) {
             line = line.trim();
+            // Find Uniforms
             if (line.startsWith("uniform")) {
                 String[] parts = line.split(" ");
                 if (parts.length == 3) {
@@ -76,6 +85,17 @@ public class Shader {
                     ShaderParameter shaderParameter = new ShaderParameter(uniformName, type, this);
                     reqUniforms.put(uniformName, shaderParameter);
                 }
+            }
+
+            // Find Vertex Attributes
+            if (line.startsWith("layout")) {
+
+                String[] parts = line.split(" ");
+                String attributeName = parts[parts.length-1].replace(";", "");
+                VertexAttributeType vertexAttributeType = VertexAttributeType.valueOf(attributeName.toUpperCase());
+
+                int location = Integer.parseInt(line.replaceAll(" ", "").substring(line.indexOf("="),line.indexOf(")")-2));
+                reqVertexAttributes.put(vertexAttributeType, location);
             }
         }
     }
@@ -100,7 +120,7 @@ public class Shader {
         return name;
     }
 
-    public ShaderParameter getParam(String name){
+    public ShaderParameter param(String name){
         if(reqUniforms.containsKey(name))
             return reqUniforms.get(name);
         else{

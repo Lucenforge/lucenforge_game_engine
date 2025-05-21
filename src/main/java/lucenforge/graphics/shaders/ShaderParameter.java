@@ -1,4 +1,4 @@
-package lucenforge.graphics;
+package lucenforge.graphics.shaders;
 
 import lucenforge.files.Log;
 import org.joml.Matrix4f;
@@ -15,7 +15,7 @@ import static org.lwjgl.opengl.GL20.glUniform4f;
 public class ShaderParameter {
 
     public enum UniformType {
-        FLOAT, VEC3, VEC4, MAT4
+        FLOAT, VEC3, VEC4, MAT4, BOOL
     }
 
     private final String name;
@@ -38,6 +38,11 @@ public class ShaderParameter {
     }
 
     // Setters
+    public void set(boolean v){
+        value = v;
+        type = UniformType.BOOL;
+    }
+
     public void set(float v) {
         value = v;
         type = UniformType.FLOAT;
@@ -80,6 +85,10 @@ public class ShaderParameter {
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             switch (type) {
+                case BOOL -> {
+                    boolean b = (Boolean) value;
+                    glUniform1i(location, b ? 1 : 0);
+                }
                 case FLOAT -> glUniform1f(location, (Float) value);
                 case VEC3 -> {
                     Vector3f v = (Vector3f) value;

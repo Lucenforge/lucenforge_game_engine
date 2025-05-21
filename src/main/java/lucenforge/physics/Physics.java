@@ -5,6 +5,7 @@ import lucenforge.files.Log;
 public class Physics {
 
     private static long gameStartTimeMillis;
+    private static long framesSinceStart;
 
     private static long updateStartTime;
     private static long deltaTimeMillis = 0;
@@ -27,6 +28,7 @@ public class Physics {
         long millisNow = System.currentTimeMillis();
         deltaTimeMillis = millisNow - updateStartTime;
         updateStartTime = millisNow;
+        framesSinceStart++;
     }
 
     public static long deltaTimeMillis(){
@@ -34,5 +36,8 @@ public class Physics {
     }
     public static float deltaTimeSeconds(){
         return deltaTimeMillis()/1000f;
+    }
+    public static long framesSinceStart(){
+        return framesSinceStart;
     }
 }

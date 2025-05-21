@@ -68,6 +68,12 @@ public class Engine {
     public static void frameBegin(boolean shouldClearScreen) {
         if(shouldClearScreen)
             clearScreen();
+
+        // Update everything
+        Physics.update();
+        glfwPollEvents();
+        Keyboard.update();
+        GraphicsManager.update();
     }
     // Frame Loop Iteration: Clears the screen and depth buffer
     public static void clearScreen(){
@@ -88,10 +94,6 @@ public class Engine {
         if(GraphicsManager.shouldRender()) {
             glfwSwapBuffers(window.id());
         }
-        // Update everything
-        Physics.update();
-        glfwPollEvents();
-        GraphicsManager.update();
     }
 
     public static void shutdown(){

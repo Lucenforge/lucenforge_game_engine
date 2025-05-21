@@ -1,8 +1,6 @@
 package lucenforge.files;
 
-import lucenforge.graphics.GraphicsManager;
-import lucenforge.graphics.primitives.mesh.Mesh;
-import lucenforge.graphics.Shader;
+import lucenforge.graphics.shaders.Shader;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -90,42 +88,6 @@ public class FileTools {
 
     public static boolean doesFileExist(String path){
         return Files.exists(Paths.get(path));
-    }
-
-    // Loads all shaders from the shaders directory
-    public static HashMap<String, Shader> loadShaderFiles(){
-        HashMap<String, Shader> shaders;
-        shaders = new HashMap<>();
-        //Check if the shaders directory exists, if not, create it
-        FileTools.createDirectory("src/main/resources/shaders");
-        //Get list of all files in the shaders directory with the extension .vert.glsl or .frag.glsl
-        ArrayList<Path> vertFiles = FileTools.getFilesInDir("src/main/resources/shaders", ".vert.glsl");
-        ArrayList<Path> fragFiles = FileTools.getFilesInDir("src/main/resources/shaders", ".frag.glsl");
-        assert(vertFiles.size() == fragFiles.size()) : "Number of vertex and fragment shaders do not match!";
-        //Check that the vertex and fragment shader names match
-        Log.write(Log.SYSTEM, "Shaders loaded: ");
-        for(int i = 0; i < vertFiles.size(); i++){
-            String vertFilePath = vertFiles.get(i).toString();
-            String fragFilePath = fragFiles.get(i).toString();
-            String vertFileName = vertFilePath.substring(vertFilePath.lastIndexOf("\\") + 1, vertFilePath.indexOf("."));
-            String fragFileName = fragFilePath.substring(fragFilePath.lastIndexOf("\\") + 1, fragFilePath.indexOf("."));
-            //Check that the vertex and fragment shader names match
-            if(!vertFileName.equals(fragFileName)) {
-                Log.writeln(Log.WARNING, "Vertex and fragment shader names do not match; Skipping: ("
-                        + vertFileName + ", " + fragFileName + ")");
-                continue;
-            }
-            //Read the shader files
-            String vertFileContents = FileTools.readFile(vertFilePath);
-            String fragFileContents = FileTools.readFile(fragFilePath);
-            //Create the shader program
-            Shader shader = new Shader(vertFileName, vertFileContents, fragFileContents);
-            //Load it into the shader lookup table
-            shaders.put(vertFileName, shader);
-            Log.write(Log.SYSTEM, " " + fragFileName + ",");
-        }
-        Log.writeln("");
-        return shaders;
     }
 
     //Prevent instantiation

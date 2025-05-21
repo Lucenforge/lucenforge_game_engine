@@ -1,10 +1,8 @@
 package lucenforge.graphics.primitives;
 
-import lucenforge.files.Log;
 import lucenforge.graphics.GraphicsManager;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
-import org.joml.Vector3i;
 
 
 public class Line extends Quadrilateral {
@@ -13,32 +11,26 @@ public class Line extends Quadrilateral {
     float width;
 
     public Line(){}
-
-    public Line(Vector3i p1, Vector3i p2, int width, Usage usage){
-        Vector3f a = GraphicsManager.pxToNDC(p1);
-        Vector3f b = GraphicsManager.pxToNDC(p2);
-        float widthNDC = GraphicsManager.pxToNDC(width);
-        Log.writeln(Log.DEBUG, "FlatLine: p1 = " + a + ", p2 = " + b + ", width = " + this.width);
-        init(a, b, widthNDC, usage);
+    public Line(int width, Vector3f p1, Vector3f p2){
+        set(width, p1, p2);
+    }
+    public Line(float width, Vector3f p1, Vector3f p2){
+        set(width, p1, p2);
     }
 
-    public Line(int width, Usage usage){
-        init(new Vector3f(), new Vector3f(), GraphicsManager.pxToNDC(width), usage);
+    public void set(int width, Vector3f p1, Vector3f p2){
+        this.p1 = p1;
+        this.p2 = p2;
+        this.width = GraphicsManager.pxToNDC(width);
+        Vector3f[] p = calculatePoints(p1, p2, this.width);
+        super.setCorners(p[0], p[1], p[2], p[3]);
     }
-    public Line(float width, Usage usage){
-        init(new Vector3f(), new Vector3f(), width, usage);
-    }
-
-    public Line(Vector3f p1, Vector3f p2, float width, Usage usage){
-        init(p1, p2, width, usage);
-    }
-
-    public void init(Vector3f p1, Vector3f p2, float width, Usage usage){
+    public void set(float width, Vector3f p1, Vector3f p2){
         this.p1 = p1;
         this.p2 = p2;
         this.width = width;
         Vector3f[] p = calculatePoints(p1, p2, width);
-        super.init(p[0], p[1], p[2], p[3], usage);
+        super.setCorners(p[0], p[1], p[2], p[3]);
     }
 
     public void update(Vector3f p1, Vector3f p2) {

@@ -1,6 +1,6 @@
 package lucenforge.graphics.primitives.mesh;
 
-import lucenforge.graphics.Shader;
+import lucenforge.graphics.shaders.Shader;
 
 import java.util.ArrayList;
 
@@ -53,6 +53,13 @@ public class MeshGroup extends Mesh{
     public void setParam(String name, Object value){
         for(Mesh mesh : meshes){
             mesh.setParam(name, value);
+        }
+    }
+
+    @Override
+    public void init(Usage usage, Shader shader){
+        for(Mesh mesh : meshes){
+            mesh.init(usage, shader);
         }
     }
 

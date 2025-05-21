@@ -2,89 +2,98 @@ package lucenforge.input;
 
 import lucenforge.files.Log;
 import lucenforge.output.Window;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import static org.lwjgl.glfw.GLFW.*;
 
 public class Keyboard {
 
-    static private final HashMap<Integer, Integer> keyMap = new HashMap<>();
-    static private String charBuffer = "";
+    private static final HashMap<Integer, Boolean> keysCurrent = new HashMap<>();
+    private static final HashMap<Integer, Boolean> keysLast = new HashMap<>();
 
-    public static final int KEY_NOT_PRESSED = GLFW_RELEASE; //0
-    public static final int KEY_PRESSED = GLFW_PRESS; //1
-    public static final int KEY_HELD = GLFW_REPEAT; //2
+    private static long windowID;
+    private static String charBuffer = "";
 
-    //Attach the keyboard input to a window
-    public static void attach(Window attachedWindow){
-        // Setup a key callback
-        // key = standardized
-        // scancode = platform specific
-        // action = 0: released, 1: pressed, 2: held
-        glfwSetKeyCallback(attachedWindow.id(), (window, key, scancode, action, mods) -> {
-            //Update keymap
-            if(!keyMap.containsKey(key) || keyMap.get(key) != action)
-                keyMap.put(key, action);
+    // Attach keyboard input to a window
+    public static void attach(Window attachedWindow) {
+        windowID = attachedWindow.id();
+
+        // Set up the character buffer callback
+        glfwSetKeyCallback(windowID, (window, key, scancode, action, mods) -> {
+            if(!keysCurrent.containsKey(key)) {
+                keysCurrent.put(key, action != GLFW_RELEASE);
+            }
         });
-
-        //Set up the charBuffer callback
-        glfwSetCharCallback(attachedWindow.id(), (window, codepoint) -> {
+        glfwSetCharCallback(windowID, (window, codepoint) -> {
             charBuffer += Character.toChars(codepoint)[0];
         });
     }
 
-    //Get the char buffer and clear it
+    // Must be called once per frame before checking input
+    public static void update() {
+        keysLast.putAll(keysCurrent);
+        keysCurrent.replaceAll((key, value) -> glfwGetKey(windowID, key) == GLFW_PRESS);
+    }
+
+    // Get the char buffer and clear it
     public static String popCharBuffer() {
         String buffer = charBuffer;
         charBuffer = "";
         return buffer;
     }
 
-    //Get key status
-    public static int keyStatus(String keyString){
+    // Query key state by int keycode
+    public static boolean isPressed(int key) {
+        return keysCurrent.getOrDefault(key, false) && !keysLast.getOrDefault(key, false);
+    }
+
+    public static boolean isHeld(int key) {
+        return keysCurrent.getOrDefault(key, false);
+    }
+
+    public static boolean isReleased(int key) {
+        return !keysCurrent.getOrDefault(key, false) && keysLast.getOrDefault(key, false);
+    }
+
+    // Query by key name (e.g., "A", "SPACE", "ENTER")
+    public static boolean isPressed(String keyName) {
+        return isPressed(getKeyCode(keyName));
+    }
+
+    public static boolean isHeld(String keyName) {
+        return isHeld(getKeyCode(keyName));
+    }
+
+    public static boolean isReleased(String keyName) {
+        return isReleased(getKeyCode(keyName));
+    }
+
+    private static int getKeyCode(String keyString) {
         keyString = keyString.toUpperCase();
-        if(keyString.length() > 1)
-            switch(keyString){
-                case "ESCAPE" -> {
-                    return keyStatus(GLFW_KEY_ESCAPE);
-                }
-                case "SPACE" -> {
-                    return keyStatus(GLFW_KEY_SPACE);
-                }
-                case "ENTER" -> {
-                    return keyStatus(GLFW_KEY_ENTER);
-                }
-                case "BACKSPACE" -> {
-                    return keyStatus(GLFW_KEY_BACKSPACE);
-                }
-                case "L_SHIFT" -> {
-                    return keyStatus(GLFW_KEY_LEFT_SHIFT);
-                }
-                case "L_CTRL" -> {
-                    return keyStatus(GLFW_KEY_LEFT_CONTROL);
-                }
-                default -> {
-                    Log.writeln(Log.ERROR, "Key not found: " + keyString);
-                    return KEY_NOT_PRESSED;
-                }
+        if (keyString.length() == 1) {
+            return keyString.charAt(0); // e.g. "A" -> 65
+        }
+        return switch (keyString) {
+            case "ESCAPE" -> GLFW_KEY_ESCAPE;
+            case "SPACE" -> GLFW_KEY_SPACE;
+            case "ENTER" -> GLFW_KEY_ENTER;
+            case "BACKSPACE" -> GLFW_KEY_BACKSPACE;
+            case "L_SHIFT" -> GLFW_KEY_LEFT_SHIFT;
+            case "R_SHIFT" -> GLFW_KEY_RIGHT_SHIFT;
+            case "L_CTRL" -> GLFW_KEY_LEFT_CONTROL;
+            case "R_CTRL" -> GLFW_KEY_RIGHT_CONTROL;
+            case "F1" -> GLFW_KEY_F1;
+            case "F2" -> GLFW_KEY_F2;
+            case "F3" -> GLFW_KEY_F3;
+            // Add more as needed
+            default -> {
+                Log.writeln(Log.ERROR, "Key not recognized: " + keyString);
+                yield -1;
             }
-        else
-            return keyStatus((int)keyString.charAt(0));
-    }
-    public static int keyStatus(char keyChar){
-        return keyStatus((int)keyChar);
-    }
-    public static int keyStatus(int key) {
-        return keyMap.getOrDefault(key, KEY_NOT_PRESSED);
-    }
-    public static boolean isKeyPressed(int key) {
-        return keyMap.containsKey(key) && keyMap.get(key) != KEY_NOT_PRESSED;
-    }
-    public static boolean isKeyReleased(int key) {
-        return keyMap.containsKey(key) && keyMap.get(key) == KEY_NOT_PRESSED;
-    }
-    public static boolean isKeyHeld(int key) {
-        return keyMap.containsKey(key) && keyMap.get(key) == KEY_HELD;
+        };
     }
 
     private Keyboard() {} // Prevent instantiation

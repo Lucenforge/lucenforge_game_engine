@@ -2,12 +2,15 @@ package lucenforge.files;
 
 import lucenforge.graphics.primitives.mesh.Mesh;
 import lucenforge.graphics.primitives.mesh.Vertex;
+import lucenforge.graphics.shaders.Shader;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MeshFile {
@@ -24,7 +27,7 @@ public class MeshFile {
     private int skippedOBJFaces = 0;
 
     // Load a mesh file and return a Mesh object
-    public Mesh load(String name, Mesh.Usage usage){
+    public Mesh load(String name){
         Log.write("Loading \"" + name + ".obj\"");
 
         // Load the mesh file
@@ -36,24 +39,20 @@ public class MeshFile {
         }
         // Parse the mesh file
         parseOBJ(meshFileContents);
-        Mesh mesh = convertToMesh(usage);
-        // If the normals aren't there, create them
-        if(mesh.vertices().get(0).normal == null || fileVertexNormals == null) {
-            mesh.computeNormals(true);
-            Log.write(" (computed normals)");
-        }
+        Mesh mesh = convertToMesh();
         Log.writeln(" - loaded successfully (f: "+mesh.faces().size()+", v: "+mesh.vertices().size()+")");
 
         return mesh;
     }
 
     // Convert the parsed data into a Mesh object
-    private Mesh convertToMesh(Mesh.Usage usage) {
+    private Mesh convertToMesh() {
         Mesh mesh = new Mesh();
         ArrayList<Vertex> vertices = new ArrayList<>();
         ArrayList<Integer> indices = new ArrayList<>();
         Map<Vertex, Integer> vertexMap = new HashMap<>();
 
+        // Go through each face and add the vertices to the mesh
         for (int i = 0; i < fileVertexIndices.size(); i++) {
             Vector3i vertexIndex = fileVertexIndices.get(i);
             Vector3f[] positions = new Vector3f[3];
@@ -74,15 +73,17 @@ public class MeshFile {
             normals[2] = (normalIndex != null) ? fileVertexNormals.get(normalIndex.z) : null;
 
             for(int vIndex = 0; vIndex < 3; vIndex++){
-                Vertex v = new Vertex(positions[vIndex], textures[vIndex], normals[vIndex]);
+                Vertex v = new Vertex(positions[vIndex], normals[vIndex]);
                 Integer existingVertex = vertexMap.get(v);
                 if (existingVertex != null) {
                     indices.add(existingVertex);
+                    vertices.get(existingVertex).addTextureCoordinate(textures[vIndex]);
                 } else {
                     int newIndex = vertices.size();
                     vertices.add(v);
                     vertexMap.put(v, newIndex);
                     indices.add(newIndex);
+                    v.addTextureCoordinate(textures[vIndex]);
                 }
             }
         }
@@ -96,7 +97,13 @@ public class MeshFile {
             faces.add(new Vector3i(indices.get(i), indices.get(i + 1), indices.get(i + 2)));
         }
 
-        mesh.init(vertices, faces, usage);
+        // If the normals aren't there, create them
+        if(vertices.get(0).normal == null || fileVertexNormals == null) {
+            Mesh.computeNormals(false, vertices, faces);
+            Log.write(" (computed normals)");
+        }
+
+        mesh.setTopology(vertices, faces);
         return mesh;
     }
 
@@ -178,12 +185,12 @@ public class MeshFile {
             // Split by / to get vertex, texture, and normal indices
             String[] types = parts[part].split("/");
             vIndicesRaw[part - 1] = parseVertexIndices(types[0]);
-            if(types.length > 1) {
+            if(types.length > 1 && !types[1].isEmpty()) {
                 if(tIndicesRaw == null)
                     tIndicesRaw = new Integer[parts.length - 1];
                 tIndicesRaw[part - 1] = parseTextureIndex(types[1]);
             }
-            if(types.length > 2) {
+            if(types.length > 2 && !types[2].isEmpty()) {
                 if(nIndicesRaw == null)
                     nIndicesRaw = new Integer[parts.length - 1];
                 nIndicesRaw[part - 1] = parseNormalIndices(types[2]);

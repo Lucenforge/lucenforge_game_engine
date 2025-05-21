@@ -20,7 +20,7 @@ public class Window {
     private final Monitor monitor;
     private final long windowID;
     private int width, height;
-    private boolean inFocus;
+    private boolean inFocus = false;
 
     public Window(Monitor monitor) {
         this.width = Properties.getInt("window", "resolution_x", (int)(monitor.width()*0.75f));
@@ -56,7 +56,9 @@ public class Window {
 
         //Set the focus callback
         glfwSetWindowFocusCallback(windowID, (window, newIsFocused) -> {
-            inFocus = (window == windowID)? newIsFocused : inFocus;
+            boolean newValue = (window == windowID)? newIsFocused : inFocus;
+            Log.writeln(Log.DEBUG, "Window focus changed: " + newValue);
+            inFocus = newValue;
         });
 
         Log.writeln(Log.SYSTEM, "Window " + title + " started on monitor " + monitor.index() + " (" + monitor.name() + ") with resolution " + width + "x" + height);

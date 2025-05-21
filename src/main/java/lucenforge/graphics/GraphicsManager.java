@@ -1,8 +1,7 @@
 package lucenforge.graphics;
 
-import lucenforge.files.FileTools;
 import lucenforge.files.Log;
-import lucenforge.graphics.primitives.mesh.Mesh;
+import lucenforge.graphics.shaders.Shader;
 import lucenforge.output.Monitor;
 import lucenforge.output.Window;
 import lucenforge.files.Properties;
@@ -18,7 +17,7 @@ import static org.lwjgl.opengl.GL20.*;
 public class GraphicsManager {
 
     // Lookup table for shaders
-    public static HashMap<String, Shader> masterShaders;
+    public static HashMap<String, Shader> masterShaders = new HashMap<>();
     // List of all render layers
     private static final ArrayList<RenderLayer> renderLayers = new ArrayList<>();
 
@@ -42,9 +41,6 @@ public class GraphicsManager {
 
         Log.writeln(Log.SYSTEM, "Graphics: OpenGL version: " + glGetString(GL_VERSION));
         Log.writeln(Log.SYSTEM, "Graphics: Renderer: " + glGetString(GL_RENDERER) + ", Vendor: " + glGetString(GL_VENDOR));
-
-        // Load shaders and meshes
-        masterShaders = FileTools.loadShaderFiles();
 
         // Init frame time
         // Target FPS: -1 = no limit, 0 = monitor, >0 = that num

@@ -4,8 +4,9 @@ import lucenforge.entity.WorldEntity;
 import lucenforge.files.Log;
 import lucenforge.graphics.GraphicsManager;
 import lucenforge.graphics.Renderable;
-import lucenforge.graphics.Shader;
-import lucenforge.graphics.ShaderParameter;
+import lucenforge.graphics.shaders.Shader;
+import lucenforge.graphics.shaders.ShaderParameter;
+import lucenforge.graphics.shaders.VertexAttributeType;
 import org.joml.*;
 
 import java.lang.Math;
@@ -44,17 +45,17 @@ public class Mesh extends WorldEntity implements Renderable {
 
     FloatBuffer mappedBuffer = null;
 
-    public Mesh init(ArrayList<Vertex> vertices, ArrayList<Vector3i> indices, Usage usage) {
+    public void setTopology(ArrayList<Vertex> vertices, ArrayList<Vector3i> faces) {
         this.vertices = vertices;
-        this.faces = indices;
-        return init(usage);
+        this.faces = faces;
     }
-    public Mesh init(Usage usage) {
+
+    public void init(Usage usage, Shader shader) {
+        this.shader = shader;
 
         // Fail gracefully if no vertices are provided
         if (vertices.isEmpty()) {
             Log.writeln(Log.ERROR, "Cannot initialize mesh with no vertices.");
-            return this;
         }
 
         this.usage = usage;
@@ -98,35 +99,80 @@ public class Mesh extends WorldEntity implements Renderable {
         // Unbind VBO (safe), but DO NOT unbind EBO while VAO is still bound
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+    }
 
-        return this;
+
+    // Compile vertices and normals from Vector3f array to float array
+    private float[] compileVBO() {
+        int stride = vertices.get(0).getFloatStride();
+        float[] vertexBuffer = new float[vertices.size() * stride];
+        // For every vertex, add the position and normal (if present) to the buffer
+        for (int i = 0; i < vertices.size(); i++) {
+            int base = i * stride;
+            int offset = 0;
+            vertexBuffer[base + offset++] = vertices.get(i).position.x;
+            vertexBuffer[base + offset++] = vertices.get(i).position.y;
+            vertexBuffer[base + offset++] = vertices.get(i).position.z;
+            if (hasTexCoords()) { //todo change when doing textures
+                vertexBuffer[base + offset++] = vertices.get(i).textureCoords.get(0).x; //todo change when doing textures
+                vertexBuffer[base + offset++] = vertices.get(i).textureCoords.get(0).y; //todo same ^^
+            }
+            if (hasNormals()) {
+                vertexBuffer[base + offset++] = vertices.get(i).normal.x;
+                vertexBuffer[base + offset++] = vertices.get(i).normal.y;
+                vertexBuffer[base + offset++] = vertices.get(i).normal.z;
+            }
+        }
+        return vertexBuffer;
+    }
+
+    // Compile indices from Vector3i array to int array
+    private int[] compileEBO(){
+        int[] indexBuffer = new int[faces.size() * 3];
+        // For every index, add the vertex indices to the buffer
+        for (int i = 0; i < faces.size(); i++) {
+            Vector3i face = faces.get(i);
+            indexBuffer[i * 3    ] = face.x;
+            indexBuffer[i * 3 + 1] = face.y;
+            indexBuffer[i * 3 + 2] = face.z;
+        }
+        eboLength = indexBuffer.length;
+        return indexBuffer;
     }
 
     private void bindVertexAttributes(int byteStride) {
         int offsetBytes = 0;
-        int attribIndex = 0;
 
         // Position (always present)
-        glVertexAttribPointer(attribIndex, 3, GL_FLOAT, false, byteStride, offsetBytes);
-        glEnableVertexAttribArray(attribIndex++);
+        int posLoc = shader.getAttributeLocation(VertexAttributeType.POSITION);
+        glVertexAttribPointer(posLoc, 3, GL_FLOAT, false, byteStride, offsetBytes);
+        glEnableVertexAttribArray(posLoc);
         offsetBytes += 3 * Float.BYTES;
-
-        if (vertices.get(0).texture != null) {
-            glVertexAttribPointer(attribIndex, 2, GL_FLOAT, false, byteStride, offsetBytes);
-            glEnableVertexAttribArray(attribIndex++);
+        // Texture (if present)
+        if (hasTexCoords()) {
+            Integer texLoc = shader.getAttributeLocation(VertexAttributeType.TEXTURE);
+            if(texLoc != null) {
+                glVertexAttribPointer(texLoc, 2, GL_FLOAT, false, byteStride, offsetBytes);
+                glEnableVertexAttribArray(texLoc);
+            }
             offsetBytes += 2 * Float.BYTES;
         }
-
-        if (vertices.get(0).normal != null) {
-            glVertexAttribPointer(attribIndex, 3, GL_FLOAT, false, byteStride, offsetBytes);
-            glEnableVertexAttribArray(attribIndex++);
-            offsetBytes += 3 * Float.BYTES;
+        // Normal (if present)
+        if (hasNormals()) {
+            Integer normLoc = shader.getAttributeLocation(VertexAttributeType.NORMAL);
+            if(normLoc != null) {
+                glVertexAttribPointer(normLoc, 3, GL_FLOAT, false, byteStride, offsetBytes);
+                glEnableVertexAttribArray(normLoc);
+            }
         }
+    }
 
-        if(byteStride != offsetBytes){
-            Log.writeln(Log.WARNING, "Byte offset (" + offsetBytes + ") "
-                    + "doesn't equal byte stride (" + byteStride + ") in bindVertexAttributes in the Mesh class");
-        }
+    private boolean hasTexCoords() {
+        return vertices.get(0).textureCoords != null && !vertices.get(0).textureCoords.isEmpty();
+    }
+
+    private boolean hasNormals() {
+        return vertices.get(0).normal != null;
     }
 
     public void updateVerts(ArrayList<Vertex> vertices) {
@@ -183,82 +229,58 @@ public class Mesh extends WorldEntity implements Renderable {
         glBindVertexArray(0);
     }
 
-    // Compile vertices and normals from Vector3f array to float array
-    private float[] compileVBO() {
-        int stride = vertices.get(0).getFloatStride();
-        float[] vertexBuffer = new float[vertices.size() * stride];
-        // For every vertex, add the position and normal (if present) to the buffer
-        for (int i = 0; i < vertices.size(); i++) {
-            int base = i * stride;
-            int offset = 0;
-            vertexBuffer[base + offset++] = vertices.get(i).position.x;
-            vertexBuffer[base + offset++] = vertices.get(i).position.y;
-            vertexBuffer[base + offset++] = vertices.get(i).position.z;
-            if (vertices.get(i).texture != null) {
-                vertexBuffer[base + offset++] = vertices.get(i).texture.x;
-                vertexBuffer[base + offset++] = vertices.get(i).texture.y;
-            }
-            if (vertices.get(i).normal != null) {
-                vertexBuffer[base + offset++] = vertices.get(i).normal.x;
-                vertexBuffer[base + offset++] = vertices.get(i).normal.y;
-                vertexBuffer[base + offset  ] = vertices.get(i).normal.z;
-            }
-        }
-        return vertexBuffer;
-    }
-
-    // Compile indices from Vector3i array to int array
-    private int[] compileEBO(){
-        int[] indexBuffer = new int[faces.size() * 3];
-        // For every index, add the vertex indices to the buffer
-        for (int i = 0; i < faces.size(); i++) {
-            Vector3i face = faces.get(i);
-            indexBuffer[i * 3    ] = face.x;
-            indexBuffer[i * 3 + 1] = face.y;
-            indexBuffer[i * 3 + 2] = face.z;
-        }
-        eboLength = indexBuffer.length;
-        return indexBuffer;
-    }
-
     // Compute normals for the mesh
-    public void computeNormals(boolean smooth) {
-        ArrayList<Vector3f> normals = new ArrayList<>();
-        for(Vertex ignored : vertices){
-            normals.add(new Vector3f());
+    public void shadeSmooth(boolean smooth){
+        if (vertices == null || faces == null) {
+            Log.writeln(Log.ERROR, "Mesh not initialized; Cannot compute normals!");
+            return;
+        }
+        computeNormals(smooth, vertices, faces);
+    }
+    public static void computeNormals(boolean smooth, ArrayList<Vertex> vertices, ArrayList<Vector3i> faces) {
+        if (!smooth) {
+            // Flat shading: use existing logic
+            for (Vector3i face : faces) {
+                Vector3f v1 = vertices.get(face.x).position;
+                Vector3f v2 = vertices.get(face.y).position;
+                Vector3f v3 = vertices.get(face.z).position;
+
+                Vector3f edge1 = new Vector3f(v2).sub(v1);
+                Vector3f edge2 = new Vector3f(v3).sub(v1);
+                Vector3f normal = edge1.cross(edge2).normalize();
+
+                vertices.get(face.x).normal = new Vector3f(normal);
+                vertices.get(face.y).normal = new Vector3f(normal);
+                vertices.get(face.z).normal = new Vector3f(normal);
+            }
+            return;
         }
 
+        // Smooth shading
+        // Map from position to accumulated normal
+        HashMap<Vector3f, Vector3f> normalMap = new HashMap<>(vertices.size());
+
+        // First pass: accumulate face normals
         for (Vector3i face : faces) {
-            Vector3f v1 = vertices.get(face.x).position;
-            Vector3f v2 = vertices.get(face.y).position;
-            Vector3f v3 = vertices.get(face.z).position;
+            Vertex v0 = vertices.get(face.x);
+            Vertex v1 = vertices.get(face.y);
+            Vertex v2 = vertices.get(face.z);
 
-            Vector3f edge1 = v2.sub(v1, new Vector3f());
-            Vector3f edge2 = v3.sub(v1, new Vector3f());
+            Vector3f edge1 = new Vector3f(v1.position).sub(v0.position);
+            Vector3f edge2 = new Vector3f(v2.position).sub(v0.position);
+            Vector3f faceNormal = edge1.cross(edge2).normalize();
 
-            Vector3f normal = edge1.cross(edge2).normalize();
-
-            if (smooth) {
-                normals.get(face.x).add(normal);
-                normals.get(face.y).add(normal);
-                normals.get(face.z).add(normal);
-            } else {
-                normals.set(face.x, new Vector3f(normal));
-                normals.set(face.y, new Vector3f(normal));
-                normals.set(face.z, new Vector3f(normal));
+            for (Vertex v : new Vertex[] { v0, v1, v2 }) {
+                Vector3f key = v.position; // assumes no two Vector3f instances represent the same point unless shared
+                Vector3f acc = normalMap.computeIfAbsent(key, k -> new Vector3f());
+                acc.add(faceNormal);
             }
         }
 
-        if (smooth) {
-            for (Vector3f n : normals) {
-                if (n.lengthSquared() > 0f) {
-                    n.normalize();
-                }
-            }
-        }
-
-        for(int i = 0; i < vertices.size(); i++){
-            vertices.get(i).normal = new Vector3f(normals.get(i).normalize());
+        // Second pass: normalize and assign
+        for (Vertex v : vertices) {
+            Vector3f key = v.position;
+            v.normal = new Vector3f(normalMap.get(key)).normalize();
         }
     }
 
@@ -291,7 +313,7 @@ public class Mesh extends WorldEntity implements Renderable {
             return;
         }
         if (!params.containsKey(paramName)) {
-            ShaderParameter paramFromShader = shader.getParam(paramName);
+            ShaderParameter paramFromShader = shader.param(paramName);
             if(paramFromShader == null) { //Warning shows up in the function above
                 return;
             }
