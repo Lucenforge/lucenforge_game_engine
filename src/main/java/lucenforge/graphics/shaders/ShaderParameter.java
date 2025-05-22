@@ -1,11 +1,13 @@
 package lucenforge.graphics.shaders;
 
 import lucenforge.files.Log;
+import lucenforge.graphics.Texture;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL20.*;
@@ -15,7 +17,7 @@ import static org.lwjgl.opengl.GL20.glUniform4f;
 public class ShaderParameter {
 
     public enum UniformType {
-        FLOAT, VEC3, VEC4, MAT4, BOOL
+        BOOL, FLOAT, VEC3, VEC4, MAT4, SAMPLER2D
     }
 
     private final String name;
@@ -63,6 +65,11 @@ public class ShaderParameter {
         type = UniformType.MAT4;
     }
 
+    public void set(ByteBuffer v) {
+        value = v;
+        type = UniformType.SAMPLER2D;
+    }
+
     public void pushToShader() {
         if (!isSet()) {
             Log.writeln(Log.ERROR, "Cannot push shader parameter " + name + " to the shader " + shader.name() + " because it's not set");
@@ -102,6 +109,9 @@ public class ShaderParameter {
                     FloatBuffer fb = stack.mallocFloat(16);
                     ((Matrix4f) value).get(fb);
                     glUniformMatrix4fv(location, false, fb);
+                }
+                case SAMPLER2D -> {
+                    glUniform1i(location, 0);
                 }
                 default -> Log.writeln(Log.ERROR, "Unknown uniform type: " + type);
             }

@@ -56,9 +56,7 @@ public class Window {
 
         //Set the focus callback
         glfwSetWindowFocusCallback(windowID, (window, newIsFocused) -> {
-            boolean newValue = (window == windowID)? newIsFocused : inFocus;
-            Log.writeln(Log.DEBUG, "Window focus changed: " + newValue);
-            inFocus = newValue;
+            inFocus = (window == windowID)? newIsFocused : inFocus;
         });
 
         Log.writeln(Log.SYSTEM, "Window " + title + " started on monitor " + monitor.index() + " (" + monitor.name() + ") with resolution " + width + "x" + height);
@@ -105,7 +103,7 @@ public class Window {
     }
 
     //Set the window icon
-    public void setIcon(String path){
+    public void setIcon(String path){ //todo make this load from TextureFile
         // Load image from resources
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer width = stack.mallocInt(1);

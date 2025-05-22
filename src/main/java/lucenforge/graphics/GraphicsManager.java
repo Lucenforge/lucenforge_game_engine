@@ -54,6 +54,9 @@ public class GraphicsManager {
             targetFrameTime = (int) Math.floor(1000d / targetFPS);
         nextFrameTargetTimestamp = targetFrameTime + System.currentTimeMillis();
         Log.writeln(Log.SYSTEM, "Targeting " + Math.round(1000f/ targetFrameTime) + " fps");
+
+        // Init texture preferences
+        Texture.init(true);
     }
 
     // Get the FPS for the last frame

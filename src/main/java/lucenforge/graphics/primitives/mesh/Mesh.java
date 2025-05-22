@@ -4,6 +4,7 @@ import lucenforge.entity.WorldEntity;
 import lucenforge.files.Log;
 import lucenforge.graphics.GraphicsManager;
 import lucenforge.graphics.Renderable;
+import lucenforge.graphics.Texture;
 import lucenforge.graphics.shaders.Shader;
 import lucenforge.graphics.shaders.ShaderParameter;
 import lucenforge.graphics.shaders.VertexAttributeType;
@@ -38,6 +39,8 @@ public class Mesh extends WorldEntity implements Renderable {
     private ArrayList<Vertex> vertices;
     // Indices
     private ArrayList<Vector3i> faces;
+    // Texture
+    private Texture texture;
 
     private Usage usage;
     private Shader shader;
@@ -144,13 +147,13 @@ public class Mesh extends WorldEntity implements Renderable {
         int offsetBytes = 0;
 
         // Position (always present)
-        int posLoc = shader.getAttributeLocation(VertexAttributeType.POSITION);
+        int posLoc = shader.getAttributeLocation(VertexAttributeType.POSITION_IN);
         glVertexAttribPointer(posLoc, 3, GL_FLOAT, false, byteStride, offsetBytes);
         glEnableVertexAttribArray(posLoc);
         offsetBytes += 3 * Float.BYTES;
         // Texture (if present)
         if (hasTexCoords()) {
-            Integer texLoc = shader.getAttributeLocation(VertexAttributeType.TEXTURE);
+            Integer texLoc = shader.getAttributeLocation(VertexAttributeType.TEXTURE_IN);
             if(texLoc != null) {
                 glVertexAttribPointer(texLoc, 2, GL_FLOAT, false, byteStride, offsetBytes);
                 glEnableVertexAttribArray(texLoc);
@@ -159,7 +162,7 @@ public class Mesh extends WorldEntity implements Renderable {
         }
         // Normal (if present)
         if (hasNormals()) {
-            Integer normLoc = shader.getAttributeLocation(VertexAttributeType.NORMAL);
+            Integer normLoc = shader.getAttributeLocation(VertexAttributeType.NORMAL_IN);
             if(normLoc != null) {
                 glVertexAttribPointer(normLoc, 3, GL_FLOAT, false, byteStride, offsetBytes);
                 glEnableVertexAttribArray(normLoc);
@@ -206,6 +209,8 @@ public class Mesh extends WorldEntity implements Renderable {
     private void pushParamsToShader(){
         if(shader.isUniformRequired("model"))
             setParam("model", getModelMatrix());
+        if(texture != null)
+            setParam("texture0", 0);
         //Push uniforms (parameters)
         for(ShaderParameter param : params.values()){
             param.pushToShader();
@@ -222,6 +227,11 @@ public class Mesh extends WorldEntity implements Renderable {
         if(!shader.areParametersSet()){
             Log.writeln(Log.ERROR, "Shader " + shader.name() + " has not set all required uniforms!");
             return;
+        }
+
+        // Bind texture
+        if (texture != null) {
+            texture.bind();
         }
 
         glBindVertexArray(vao);
@@ -295,17 +305,6 @@ public class Mesh extends WorldEntity implements Renderable {
                 .scale(scale());
     }
 
-    // Cleanup method
-    public void cleanup() {
-        if (mappedBuffer != null) {
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glUnmapBuffer(GL_ARRAY_BUFFER);
-        }
-        glDeleteVertexArrays(vao);
-        glDeleteBuffers(vbo);
-        glDeleteBuffers(ebo);
-    }
-
     // Shader setters and getters
     public <T> void setParam(String paramName, T value){
         if(shader == null) {
@@ -322,12 +321,16 @@ public class Mesh extends WorldEntity implements Renderable {
         ShaderParameter parameter = params.get(paramName);
         if(value instanceof Float)
             parameter.set((Float) value);
+        else if(value instanceof Integer)
+            parameter.set((Integer) value);
         else if(value instanceof Vector3f)
             parameter.set((Vector3f) value);
         else if(value instanceof Vector4f)
             parameter.set((Vector4f) value);
         else if(value instanceof Matrix4f)
             parameter.set((Matrix4f) value);
+        else if(value instanceof ByteBuffer)
+            parameter.set((ByteBuffer) value);
         else{
             Log.writeln(Log.ERROR, "Type needs to be added to Mesh class: "+value);
         }
@@ -345,6 +348,10 @@ public class Mesh extends WorldEntity implements Renderable {
     public Shader shader(){
         return shader;
     }
+    public void setTexture(Texture texture){
+        this.texture = texture;
+        texture.setShader(shader);
+    }
 
     // Getters for vertices and indices
     public ArrayList<Vertex> vertices(){
@@ -358,5 +365,19 @@ public class Mesh extends WorldEntity implements Renderable {
     }
     public void setFaces(ArrayList<Vector3i> faces){
         this.faces = faces;
+    }
+
+
+    // Cleanup method
+    public void cleanup() {
+        if(texture != null)
+            texture.cleanup();
+        if (mappedBuffer != null) {
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glUnmapBuffer(GL_ARRAY_BUFFER);
+        }
+        glDeleteVertexArrays(vao);
+        glDeleteBuffers(vbo);
+        glDeleteBuffers(ebo);
     }
 }
