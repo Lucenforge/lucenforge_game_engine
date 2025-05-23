@@ -1,5 +1,6 @@
 package lucenforge.graphics;
 
+import lucenforge.files.Log;
 import lucenforge.graphics.shaders.Shader;
 import org.joml.Vector2i;
 
@@ -29,6 +30,7 @@ public class Texture {
         this.imageData = image;
         this.dimensions = new Vector2i(width, height);
         this.channels = channels;
+        Log.writeln(name + " loaded with dimensions: " + dimensions.x + "x" + dimensions.y + " and channels: " + channels);
 
         // Upload once at creation
         textureID = glGenTextures();

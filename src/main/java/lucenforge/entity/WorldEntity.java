@@ -23,6 +23,7 @@ public class WorldEntity {
     public void setPosition(Vector3f position){
         this.position = position;
     }
+    public void translate(Vector3f diff){this.position.add(diff);}
 
     // Rotation
     public Vector3f rotation(){

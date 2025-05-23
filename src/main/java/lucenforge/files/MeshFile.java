@@ -73,17 +73,15 @@ public class MeshFile {
             normals[2] = (normalIndex != null) ? fileVertexNormals.get(normalIndex.z) : null;
 
             for(int vIndex = 0; vIndex < 3; vIndex++){
-                Vertex v = new Vertex(positions[vIndex], normals[vIndex]);
+                Vertex v = new Vertex(positions[vIndex], textures[vIndex], normals[vIndex]);
                 Integer existingVertex = vertexMap.get(v);
                 if (existingVertex != null) {
                     indices.add(existingVertex);
-                    vertices.get(existingVertex).addTextureCoordinate(textures[vIndex]);
                 } else {
                     int newIndex = vertices.size();
                     vertices.add(v);
                     vertexMap.put(v, newIndex);
                     indices.add(newIndex);
-                    v.addTextureCoordinate(textures[vIndex]);
                 }
             }
         }

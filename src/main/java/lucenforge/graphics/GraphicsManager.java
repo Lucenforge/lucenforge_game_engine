@@ -38,6 +38,8 @@ public class GraphicsManager {
         // Initialize OpenGL
         glViewport(0, 0, window.width(), window.height());  // Set the viewport to the window size
         glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (multisampling)
+        // Make internal geometry "mostly transparent"
+        glPolygonMode(GL_BACK, GL_LINE); //GL_FRONT_AND_BACK
 
         Log.writeln(Log.SYSTEM, "Graphics: OpenGL version: " + glGetString(GL_VERSION));
         Log.writeln(Log.SYSTEM, "Graphics: Renderer: " + glGetString(GL_RENDERER) + ", Vendor: " + glGetString(GL_VENDOR));

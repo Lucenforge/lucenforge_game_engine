@@ -27,9 +27,9 @@ public class ShaderParameter {
 
     public ShaderParameter(ShaderParameter toCopy) {
         this.name = toCopy.name;
-        this.type = toCopy.type;
         this.shader = toCopy.shader;
         this.value = null;
+        this.type = toCopy.type;
     }
 
     public ShaderParameter(String name, String typeString, Shader shader){
@@ -40,6 +40,7 @@ public class ShaderParameter {
     }
 
     // Setters
+
     public void set(boolean v){
         value = v;
         type = UniformType.BOOL;
@@ -120,6 +121,19 @@ public class ShaderParameter {
 
     public boolean isSet() {
         return value != null;
+    }
+
+    public Class<?> getType() {
+        switch (type) {
+            case BOOL -> {return boolean.class;}
+            case FLOAT -> {return float.class;}
+            case VEC3 -> {return Vector3f.class;}
+            case VEC4 -> {return Vector4f.class;}
+            case MAT4 -> {return Matrix4f.class;}
+            case SAMPLER2D -> {return Integer.class;}
+            default -> Log.writeln(Log.ERROR, "Unknown uniform type: " + type);
+        }
+        return null;
     }
 
     public String name() {

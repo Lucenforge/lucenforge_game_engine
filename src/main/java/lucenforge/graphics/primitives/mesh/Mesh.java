@@ -117,8 +117,8 @@ public class Mesh extends WorldEntity implements Renderable {
             vertexBuffer[base + offset++] = vertices.get(i).position.y;
             vertexBuffer[base + offset++] = vertices.get(i).position.z;
             if (hasTexCoords()) { //todo change when doing textures
-                vertexBuffer[base + offset++] = vertices.get(i).textureCoords.get(0).x; //todo change when doing textures
-                vertexBuffer[base + offset++] = vertices.get(i).textureCoords.get(0).y; //todo same ^^
+                vertexBuffer[base + offset++] = vertices.get(i).texture.x; //todo change when doing textures
+                vertexBuffer[base + offset++] = vertices.get(i).texture.y; //todo same ^^
             }
             if (hasNormals()) {
                 vertexBuffer[base + offset++] = vertices.get(i).normal.x;
@@ -171,7 +171,7 @@ public class Mesh extends WorldEntity implements Renderable {
     }
 
     private boolean hasTexCoords() {
-        return vertices.get(0).textureCoords != null && !vertices.get(0).textureCoords.isEmpty();
+        return vertices.get(0).texture != null;
     }
 
     private boolean hasNormals() {
@@ -316,7 +316,11 @@ public class Mesh extends WorldEntity implements Renderable {
             if(paramFromShader == null) { //Warning shows up in the function above
                 return;
             }
-            params.put(paramName, new ShaderParameter(paramFromShader));
+            if(!value.getClass().equals(paramFromShader.getType())){
+                Log.writeln(Log.ERROR, "Type mismatch for shader parameter " + paramName + ": expected " + paramFromShader.getType() + ", got " + value.getClass());
+            }else {
+                params.put(paramName, new ShaderParameter(paramFromShader));
+            }
         }
         ShaderParameter parameter = params.get(paramName);
         if(value instanceof Float)
