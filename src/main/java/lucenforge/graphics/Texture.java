@@ -2,72 +2,73 @@ package lucenforge.graphics;
 
 import lucenforge.files.Log;
 import lucenforge.graphics.shaders.Shader;
-import org.joml.Vector2i;
+import org.joml.Vector2f;
 
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*; // for glGenerateMipmap
-import static org.lwjgl.opengl.GL46C.GL_MAX_TEXTURE_MAX_ANISOTROPY;
-import static org.lwjgl.opengl.GL46C.GL_TEXTURE_MAX_ANISOTROPY;
 import static org.lwjgl.stb.STBImage.stbi_set_flip_vertically_on_load;
 
 public class Texture {
 
-    private final String name;
     private final ByteBuffer imageData;
-    private final Vector2i dimensions;
-    private final int channels;
     private final int textureID;
-    private Shader shader;
+    private final Vector2f uvScale = new Vector2f(1, 1);
+    private final Vector2f uvOffset = new Vector2f(0, 0);
 
     public static void init(boolean flipVertically){
         stbi_set_flip_vertically_on_load(flipVertically);
     }
 
-    public Texture(String name, ByteBuffer image, int width, int height, int channels) {
-        this.name = name;
+    public Texture(ByteBuffer image, int width, int height, int channels) {
         this.imageData = image;
-        this.dimensions = new Vector2i(width, height);
-        this.channels = channels;
-        Log.writeln(name + " loaded with dimensions: " + dimensions.x + "x" + dimensions.y + " and channels: " + channels);
+        Log.writeln(" - loaded: " + width + "x" + height + "x" + channels);
 
-        // Upload once at creation
         textureID = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, textureID);
 
-        // Apply preferences (requires bound texture!)
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Remove mipmap usage
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // Enable mipmap usage
+        // Filtering
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        setRepeat(false);
 
-        // Upload image data once
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dimensions.x, dimensions.y, 0,
-                channels == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, imageData);
+        // Format matching
+        int format = (channels == 3) ? GL_RGB : GL_RGBA;
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, imageData);
 
-        float maxAniso = glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, maxAniso);
+        // Mipmaps — disable if using GL_LINEAR above
+         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glGenerateMipmap(GL_TEXTURE_2D); // Generate mipmaps ONCE
-
-        glBindTexture(GL_TEXTURE_2D, 0); // Unbind
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    public void bind() {
-        glActiveTexture(GL_TEXTURE0);
+    public void pushParamsToShader(Shader shader, int textureUnit) {
+//        shader.getRequiredParameter("texture0").set(textureNum);
+//        shader.param("texture0").set(0);
+        shader.requiredParameter("texture"+ textureUnit).set(textureUnit);
+        shader.requiredParameter("uvScale").set(uvScale);
+        shader.requiredParameter("uvOffset").set(uvOffset);
+    }
+
+    public void bind(int textureUnit) {
+        glActiveTexture(GL_TEXTURE0 + textureUnit);
         glBindTexture(GL_TEXTURE_2D, textureID);
-    }
-
-    public void setShader(Shader shader) {
-        this.shader = shader;
     }
 
     public void cleanup(){
         glDeleteTextures(textureID);
+    }
+
+    public Texture setRepeat(boolean repeat) {
+        return setRepeat(repeat, repeat);
+    }
+    public Texture setRepeat(boolean repeatX, boolean repeatY) {
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeatX ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeatY ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        return this;
     }
 }

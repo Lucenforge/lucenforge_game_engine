@@ -58,7 +58,7 @@ public class GraphicsManager {
         Log.writeln(Log.SYSTEM, "Targeting " + Math.round(1000f/ targetFrameTime) + " fps");
 
         // Init texture preferences
-        Texture.init(true);
+        Texture.init(false);
     }
 
     // Get the FPS for the last frame

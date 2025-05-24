@@ -98,13 +98,13 @@ public class RenderLayer implements Renderable{
 
             // Set the camera parameters
             if(shader.isUniformRequired("projection"))
-                shader.param("projection").set(camera.getProjectionMatrix());
+                shader.requiredParameter("projection").set(camera.getProjectionMatrix());
             if(shader.isUniformRequired("view"))
-                shader.param("view").set(camera.getViewMatrix());
+                shader.requiredParameter("view").set(camera.getViewMatrix());
             if(shader.isUniformRequired("aspectRatio"))
-                shader.param("aspectRatio").set(Window.getAspectRatio());
+                shader.requiredParameter("aspectRatio").set(Window.getAspectRatio());
             if(shader.isUniformRequired("cameraPos"))
-                shader.param("cameraPos").set(camera.position());
+                shader.requiredParameter("cameraPos").set(camera.position());
 
             // Set the shader parameters for each mesh
             for (Mesh mesh : meshes) {

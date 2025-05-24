@@ -24,14 +24,12 @@ public class Quadrilateral extends Mesh {
         verts.add(new Vertex(new Vector3f(p4.x, p4.y, p4.z)));
 
         // Add UV coordinates
-//        float width = p3.distance(p2);
-        float width = 1;
-//        float height = p2.distance(p1);
-        float height = 1;
-        verts.get(0).texture = new Vector2f(0, 0);           // bottom-left
-        verts.get(1).texture = new Vector2f(0, height);      // top-left
-        verts.get(2).texture = new Vector2f(width, height);  // top-right
-        verts.get(3).texture = new Vector2f(width, 0);       // bottom-right
+        float width = 1f;
+        float height = 1f;
+        verts.get(0).texture = new Vector2f(0  , 0  ); // bottom-left
+        verts.get(1).texture = new Vector2f(0  , height); // top-left
+        verts.get(2).texture = new Vector2f(width , height); // top-right
+        verts.get(3).texture = new Vector2f(width , 0  ); // bottom-right
 
         // Define the indices for the two triangles that make up the quadrilateral
         ArrayList<Vector3i> faces = new ArrayList<Vector3i>();

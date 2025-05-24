@@ -47,7 +47,7 @@ public class Shader {
     }
 
     // Check if all required parameters are set
-    public boolean areParametersSet() {
+    public boolean checkAndSendParametersToGPU() {
         boolean allGood = true;
         for (ShaderParameter shaderParameter : reqUniforms.values()) {
             if (shaderParameter.isSet()) {
@@ -80,8 +80,9 @@ public class Shader {
             if (line.startsWith("uniform")) {
                 String[] parts = line.split(" ");
                 if (parts.length == 3) {
-                    String type = parts[1];
+                    String typeString = parts[1];
                     String uniformName = parts[2].replace(";", "");
+                    UniformType type = UniformType.valueOf(typeString.toUpperCase());
                     ShaderParameter shaderParameter = new ShaderParameter(uniformName, type, this);
                     reqUniforms.put(uniformName, shaderParameter);
                 }
@@ -120,7 +121,7 @@ public class Shader {
         return name;
     }
 
-    public ShaderParameter param(String name){
+    public ShaderParameter requiredParameter(String name){
         if(reqUniforms.containsKey(name))
             return reqUniforms.get(name);
         else{

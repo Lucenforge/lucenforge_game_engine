@@ -3,6 +3,7 @@ package lucenforge.graphics.shaders;
 import lucenforge.files.Log;
 import lucenforge.graphics.Texture;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
@@ -16,10 +17,6 @@ import static org.lwjgl.opengl.GL20.glUniform4f;
 
 public class ShaderParameter {
 
-    public enum UniformType {
-        BOOL, FLOAT, VEC3, VEC4, MAT4, SAMPLER2D
-    }
-
     private final String name;
     private final Shader shader;
     private Object value;
@@ -32,43 +29,35 @@ public class ShaderParameter {
         this.type = toCopy.type;
     }
 
-    public ShaderParameter(String name, String typeString, Shader shader){
-        UniformType type = UniformType.valueOf(typeString.toUpperCase());
+    // Constructor for setting the required parameter
+    public ShaderParameter(String name, UniformType type, Shader shader) {
         this.name = name;
-        this.type = type;
         this.shader = shader;
+        this.type = type;
     }
 
-    // Setters
-
-    public void set(boolean v){
-        value = v;
-        type = UniformType.BOOL;
-    }
-
-    public void set(float v) {
-        value = v;
-        type = UniformType.FLOAT;
-    }
-
-    public void set(Vector3f v) {
-        value = v;
-        type = UniformType.VEC3;
-    }
-
-    public void set(Vector4f v) {
-        value = v;
-        type = UniformType.VEC4;
-    }
-
-    public void set(Matrix4f v) {
-        value = v;
-        type = UniformType.MAT4;
-    }
-
-    public void set(ByteBuffer v) {
-        value = v;
-        type = UniformType.SAMPLER2D;
+    public void set(Object v){
+        if(v == null){
+            Log.writeln(Log.ERROR, "Cannot set shader parameter " + name + " to null");
+            return;
+        }
+        //Check validity
+        boolean isValid = switch (type) {
+            case BOOL      -> v instanceof Boolean;
+            case INT       -> v instanceof Integer;
+            case FLOAT     -> v instanceof Float;
+            case VEC2      -> v instanceof Vector2f;
+            case VEC3      -> v instanceof Vector3f;
+            case VEC4      -> v instanceof Vector4f;
+            case MAT4      -> v instanceof Matrix4f;
+            case SAMPLER2D -> v instanceof Integer || v instanceof ByteBuffer;
+            default -> false;
+        };
+        if(!isValid){
+            Log.writeln(Log.ERROR, "Mismatch or unknown type for shader parameter " + name + ": expected " + type + ", got " + v.getClass().getName());
+            return;
+        }
+        this.value = v;
     }
 
     public void pushToShader() {
@@ -97,7 +86,15 @@ public class ShaderParameter {
                     boolean b = (Boolean) value;
                     glUniform1i(location, b ? 1 : 0);
                 }
+                case SAMPLER2D, INT -> {
+                    int i = (Integer) value;
+                    glUniform1i(location, i);
+                }
                 case FLOAT -> glUniform1f(location, (Float) value);
+                case VEC2 -> {
+                    Vector2f v = (Vector2f) value;
+                    glUniform2f(location, v.x, v.y);
+                }
                 case VEC3 -> {
                     Vector3f v = (Vector3f) value;
                     glUniform3f(location, v.x, v.y, v.z);
@@ -111,9 +108,6 @@ public class ShaderParameter {
                     ((Matrix4f) value).get(fb);
                     glUniformMatrix4fv(location, false, fb);
                 }
-                case SAMPLER2D -> {
-                    glUniform1i(location, 0);
-                }
                 default -> Log.writeln(Log.ERROR, "Unknown uniform type: " + type);
             }
         }
@@ -123,20 +117,7 @@ public class ShaderParameter {
         return value != null;
     }
 
-    public Class<?> getType() {
-        switch (type) {
-            case BOOL -> {return boolean.class;}
-            case FLOAT -> {return float.class;}
-            case VEC3 -> {return Vector3f.class;}
-            case VEC4 -> {return Vector4f.class;}
-            case MAT4 -> {return Matrix4f.class;}
-            case SAMPLER2D -> {return Integer.class;}
-            default -> Log.writeln(Log.ERROR, "Unknown uniform type: " + type);
-        }
-        return null;
-    }
-
-    public String name() {
+    public String name(){
         return name;
     }
 }
