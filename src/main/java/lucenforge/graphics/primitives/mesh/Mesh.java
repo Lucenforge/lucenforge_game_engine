@@ -222,24 +222,23 @@ public class Mesh extends WorldEntity implements Renderable {
             return;
         }
 
-        // Push parameters to shader
+        shader.bind();
+
         if(texture != null)
             texture.pushParamsToShader(shader, textureSlot);
+
         pushParamsToShader();
 
-        if(!shader.checkAndSendParametersToGPU()){
+        if(!shader.checkAndSendParametersToGPU()) {
+            shader.unbind(); // Optional but clean
             return;
         }
 
-        bind();
-
+        glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, eboLength, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
-    }
 
-    public void bind() {
-        glBindVertexArray(vao);
-        if (texture != null) texture.bind(textureSlot);
+        shader.unbind(); // Optional cleanup
     }
 
     // Compute normals for the mesh
@@ -338,6 +337,9 @@ public class Mesh extends WorldEntity implements Renderable {
     }
     public void setTexture(Texture texture){
         this.texture = texture;
+    }
+    public Texture texture() {
+        return texture;
     }
 
     // Getters for vertices and indices

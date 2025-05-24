@@ -45,8 +45,6 @@ public class Texture {
     }
 
     public void pushParamsToShader(Shader shader, int textureUnit) {
-//        shader.getRequiredParameter("texture0").set(textureNum);
-//        shader.param("texture0").set(0);
         shader.requiredParameter("texture"+ textureUnit).set(textureUnit);
         shader.requiredParameter("uvScale").set(uvScale);
         shader.requiredParameter("uvOffset").set(uvOffset);
@@ -59,6 +57,14 @@ public class Texture {
 
     public void cleanup(){
         glDeleteTextures(textureID);
+    }
+
+    public void setUvOffset(Vector2f offset) {
+        this.uvOffset.set(offset);
+    }
+
+    public void setUvScale(Vector2f scale) {
+        this.uvScale.set(scale);
     }
 
     public Texture setRepeat(boolean repeat) {
