@@ -117,9 +117,9 @@ public class Mesh extends WorldEntity implements Renderable {
             vertexBuffer[base + offset++] = vertices.get(i).position.x;
             vertexBuffer[base + offset++] = vertices.get(i).position.y;
             vertexBuffer[base + offset++] = vertices.get(i).position.z;
-            if (hasTexCoords()) { //todo change when doing textures
-                vertexBuffer[base + offset++] = vertices.get(i).texture.x; //todo change when doing textures
-                vertexBuffer[base + offset++] = vertices.get(i).texture.y; //todo same ^^
+            if (hasTexCoords()) {
+                vertexBuffer[base + offset++] = vertices.get(i).texture.x;
+                vertexBuffer[base + offset++] = vertices.get(i).texture.y;
             }
             if (hasNormals()) {
                 vertexBuffer[base + offset++] = vertices.get(i).normal.x;
@@ -222,8 +222,6 @@ public class Mesh extends WorldEntity implements Renderable {
             return;
         }
 
-        shader.bind();
-
         if(texture != null)
             texture.pushParamsToShader(shader, textureSlot);
 
@@ -238,7 +236,6 @@ public class Mesh extends WorldEntity implements Renderable {
         glDrawElements(GL_TRIANGLES, eboLength, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-        shader.unbind(); // Optional cleanup
     }
 
     // Compute normals for the mesh

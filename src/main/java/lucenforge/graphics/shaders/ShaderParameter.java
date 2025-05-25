@@ -1,7 +1,6 @@
 package lucenforge.graphics.shaders;
 
 import lucenforge.files.Log;
-import lucenforge.graphics.Texture;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -17,10 +16,11 @@ import static org.lwjgl.opengl.GL20.glUniform4f;
 
 public class ShaderParameter {
 
-    private final String name;
-    private final Shader shader;
-    private Object value;
-    private UniformType type;
+    private final String name; //The name of the parameter
+    private final Shader shader; //The shader this parameter belongs to
+    private Object value; //The value of the parameter
+    private UniformType type; //The type of the parameter
+    Integer location = null; //openGL location
 
     public ShaderParameter(ShaderParameter toCopy) {
         this.name = toCopy.name;
@@ -74,9 +74,11 @@ public class ShaderParameter {
             return;
         }
 
-        int location = glGetUniformLocation(shader.id(), name);
+        if(location == null)
+            location = glGetUniformLocation(shader.id(), name);
         if (location == -1) {
             Log.writeln(Log.ERROR, "Uniform " + name + " not found in shader " + shader.name());
+            location = null;
             return;
         }
 
