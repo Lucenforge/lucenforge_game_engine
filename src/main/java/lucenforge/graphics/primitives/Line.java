@@ -1,6 +1,7 @@
 package lucenforge.graphics.primitives;
 
 import lucenforge.graphics.GraphicsManager;
+import lucenforge.misc.Tools;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 
@@ -21,30 +22,30 @@ public class Line extends Quadrilateral {
     public void set(int width, Vector3f p1, Vector3f p2){
         this.p1 = p1;
         this.p2 = p2;
-        this.width = GraphicsManager.pxToNDC(width);
+        this.width = Tools.pxToNDC(width);
         Vector3f[] p = calculatePoints(p1, p2, this.width);
-        super.setCorners(p[0], p[1], p[2], p[3]);
+        super.setCorners(p[3], p[2], p[1], p[0]);
     }
     public void set(float width, Vector3f p1, Vector3f p2){
         this.p1 = p1;
         this.p2 = p2;
         this.width = width;
         Vector3f[] p = calculatePoints(p1, p2, width);
-        super.setCorners(p[0], p[1], p[2], p[3]);
+        super.setCorners(p[3], p[2], p[1], p[0]);
     }
 
     public void update(Vector3f p1, Vector3f p2) {
         this.p1 = p1;
         this.p2 = p2;
         Vector3f[] points = calculatePoints(p1, p2, width);
-        super.update(points[0], points[1], points[2], points[3]);
+        super.update(points[3], points[2], points[1], points[0]);
     }
 
     public void update(Vector2i p1, Vector2i p2) {
-        Vector3f a = GraphicsManager.pxToNDC(p1);
-        Vector3f b = GraphicsManager.pxToNDC(p2);
+        Vector3f a = Tools.toVector3f(Tools.pxToNDC(p1));
+        Vector3f b = Tools.toVector3f(Tools.pxToNDC(p2));
         Vector3f[] p = calculatePoints(a, b, width); // Assuming width of 1 pixel
-        super.update(p[0], p[1], p[2], p[3]);
+        super.update(p[3], p[2], p[1], p[0]);
     }
 
     private Vector3f[] calculatePoints(Vector3f a, Vector3f b, float width) {
