@@ -4,6 +4,7 @@ import lucenforge.Engine;
 import lucenforge.files.Log;
 import lucenforge.files.Properties;
 import org.joml.Vector2i;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.*;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.*;
@@ -17,30 +18,63 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Window {
 
+    private static Window currentWindow;
+
     private final Monitor monitor;
     private final long windowID;
     private int width, height;
     private boolean inFocus = false;
+    private boolean isResizable  = false;
+    private boolean isBorderless = false;
+    private boolean isMaximized  = false;
+    private boolean isFullscreen = false;
 
     public Window(Monitor monitor) {
-        this.width = Properties.getInt("window", "resolution_x", (int)(monitor.width()*0.75f));
-        this.height = Properties.getInt("window", "resolution_y", (int)(monitor.height()*0.75f));
         this.monitor = monitor;
 
-        //Set window properties
-        boolean isResizable = Properties.getBool("window", "resizable", false);
-        boolean isBorderless = Properties.getBool("window", "borderless", false);
-        boolean isMaximized = Properties.getBool("window", "maximized", true);
-        boolean isFullscreen = Properties.getBool("window", "fullscreen", false);
+        // Read properties for window settings & add comment about which modes are available
+        String windowMode = Properties.getString("window", "mode", "windowed");
+        Properties.addComment("window", "mode", "Mode types: \"windowed\", \"fullscreen\", \"borderless\"");
+
+        if(!windowMode.equals("fullscreen") && !windowMode.equals("borderless") && !windowMode.equals("windowed")) {
+            Log.writeln(Log.WARNING, "Invalid window mode: \"" + windowMode + "\", defaulting to windowed mode.");
+        }
+        switch (windowMode) {
+            case "fullscreen" -> {
+                isFullscreen = true;
+                // width and height should match monitor for fullscreen
+                this.width = monitor.width();
+                this.height = monitor.height();
+            }
+            case "borderless" -> {
+                isBorderless = true;
+                // width and height should match monitor for borderless
+                this.width = monitor.width();
+                this.height = monitor.height();
+            }
+            case "windowed" -> {
+                isResizable = true;
+                isMaximized = Properties.getBool("window", "maximized", false);
+                this.width = Properties.getInt("window", "resolution_x", (int) (monitor.width() * 0.75f));
+                this.height = Properties.getInt("window", "resolution_y", (int) (monitor.height() * 0.75f));
+            }
+            default -> {
+                Log.writeln(Log.WARNING, "Unknown window mode: " + windowMode + ", defaulting to windowed mode.");
+            }
+        }
+
         int antiAliasingLevel = Properties.getInt("graphics", "anti-aliasing", 4);
         glfwDefaultWindowHints(); // Configure GLFW
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); //Set initial visibility
-        glfwWindowHint(GLFW_MAXIMIZED, isMaximized? GLFW_TRUE : GLFW_FALSE); //Set if the window is maximized todo figure this out
+//        glfwWindowHint(GLFW_MAXIMIZED, isMaximized? GLFW_TRUE : GLFW_FALSE); //Set if the window is maximized todo figure this out
         glfwWindowHint(GLFW_RESIZABLE, isResizable? GLFW_TRUE : GLFW_FALSE); //Set if the window is resizable
         glfwWindowHint(GLFW_DECORATED, isBorderless? GLFW_FALSE : GLFW_TRUE); //Set whether it has a frame or not (borderless key here)
+        glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE); // ensures it starts focused if possible
         glfwWindowHint(GLFW_SAMPLES, antiAliasingLevel);
 
         String title = Properties.getString("window", "title","LucenForge Engine");
+
+        // Create the window
         windowID = glfwCreateWindow(width, height, title, isFullscreen? monitor.id() : NULL, NULL);
         if ( windowID == NULL )
             throw new RuntimeException("Failed to create the GLFW window");
@@ -51,7 +85,7 @@ public class Window {
         glfwSetWindowSizeCallback(windowID, (window, newWidth, newHeight) -> {
             this.width = newWidth;
             this.height = newHeight;
-            Log.writeln("Window resized to: " + Log.TELEMETRY + newWidth + ", " + newHeight);
+            Log.writeln(Log.SYSTEM, "Window resized to: " + Log.TELEMETRY + newWidth + ", " + newHeight);
         });
 
         //Set the focus callback
@@ -59,7 +93,21 @@ public class Window {
             inFocus = (window == windowID)? newIsFocused : inFocus;
         });
 
-        Log.writeln(Log.SYSTEM, "Window " + title + " started on monitor " + monitor.index() + " (" + monitor.name() + ") with resolution " + width + "x" + height);
+        // Center if windowed but not maximized
+        if(windowMode.equals("windowed") && !isMaximized){
+            setCenter();
+        }else{
+            setPosition(0,0); //Normally not necessary, but compensates for which monitor the window is on
+        }
+
+        // Maximize window after creation
+        if(isMaximized){
+            glfwMaximizeWindow(windowID);
+        }
+
+        inFocus = true; // Assume the window is in focus after creation
+
+        Log.writeln(Log.SYSTEM, "Window " + title + " started on monitor " + monitor.index() + " (" + monitor.name() + ") with resolution " + width + "x" + height + " offset at " + monitor.originX() + ", " + monitor.originY() + ".");
     }
 
     //Get the monitor's id (used within GLFW)
@@ -75,21 +123,33 @@ public class Window {
     public int height() {
         return height;
     }
+
+    public static void set(Window window){
+        currentWindow = window;
+    }
+    public static Window current(){
+        return currentWindow;
+    }
+
     // Get the current monitor
     public Monitor monitor(){
         return monitor;
     }
+
     // Get the primary monitor's width and height
-    public static Vector2i getDim(){
-        return new Vector2i(Engine.getWindow().width(),
-                Engine.getWindow().height());
+    public Vector2i getDim(){
+        return new Vector2i(width, height);
     }
-    public static float getAspectRatio(){
-        return (float)Engine.getWindow().width() / (float)Engine.getWindow().height();
+    public float getAspectRatio(){
+        return (float)Window.current().width() / (float)Window.current().height();
     }
 
     public boolean isInFocus(){
         return inFocus;
+    }
+
+    public boolean isFullscreen(){
+        return isFullscreen;
     }
 
     //Set the window's position to the center of the monitor
@@ -99,7 +159,7 @@ public class Window {
     }
     //Set the window's position
     public void setPosition(int x, int y) {
-        glfwSetWindowPos(windowID, x, y);
+        glfwSetWindowPos(windowID, x + monitor.originX(), y + monitor.originY());
     }
 
     //Set the window icon

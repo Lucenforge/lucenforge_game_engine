@@ -2,6 +2,7 @@ package lucenforge;
 
 import lucenforge.files.Properties;
 import lucenforge.graphics.GraphicsManager;
+import lucenforge.output.Monitor;
 import lucenforge.physics.Physics;
 import lucenforge.input.Keyboard;
 import lucenforge.input.Mouse;
@@ -19,9 +20,6 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class Engine {
 
-    // The window handle
-    private static Window window;
-
     public static void init() {
         Log.writeln(Log.SYSTEM, "LWJGL Version " + Version.getVersion() + " started!");
 
@@ -34,9 +32,10 @@ public class Engine {
 
         // Create the window, primary for now until we can select a monitor
         int monitorIndex = Properties.getInt("window", "monitor", 0);
-        window = new Window(Monitors.getIndex(monitorIndex));
-        //Set the window position to the center
-        window.setCenter(); //todo find better thing for this
+        Monitor monitor = Monitors.getIndex(monitorIndex);
+        Monitor.set(monitor);
+        Window window = new Window(monitor);
+        Window.set(window);
 
         // Set the OpenGL viewport to match new window size on resize
         glfwSetFramebufferSizeCallback(window.id(), (win, width, height) -> {
@@ -58,7 +57,8 @@ public class Engine {
 
     public static void start(){
         //Show the window after load
-        glfwShowWindow(window.id());
+        glfwShowWindow(Window.current().id());
+        glfwFocusWindow(Window.current().id());
     }
 
     // Frame Loop Iteration: Begins a new frame, polls for events
@@ -73,6 +73,7 @@ public class Engine {
         Physics.update();
         glfwPollEvents();
         Keyboard.update();
+        Mouse.update();
         GraphicsManager.update();
     }
     // Frame Loop Iteration: Clears the screen and depth buffer
@@ -92,7 +93,7 @@ public class Engine {
 
         // swap the color buffers if it's time to render
         if(GraphicsManager.shouldRender()) {
-            glfwSwapBuffers(window.id());
+            glfwSwapBuffers(Window.current().id());
         }
     }
 
@@ -101,10 +102,10 @@ public class Engine {
         GraphicsManager.cleanup();
 
         // 2. Free GLFW callbacks
-        glfwFreeCallbacks(window.id());
+        glfwFreeCallbacks(Window.current().id());
 
         // 3. Destroy the window
-        glfwDestroyWindow(window.id());
+        glfwDestroyWindow(Window.current().id());
 
         // 4. Terminate GLFW itself
         glfwTerminate();
@@ -123,11 +124,7 @@ public class Engine {
     }
 
     public static boolean isShutdownRequested() {
-        return glfwWindowShouldClose(window.id());
-    }
-
-    public static Window getWindow() {
-        return window;
+        return glfwWindowShouldClose(Window.current().id());
     }
 
     private Engine() {} // Prevent instantiation
