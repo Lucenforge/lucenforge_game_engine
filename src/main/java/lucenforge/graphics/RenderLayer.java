@@ -102,7 +102,7 @@ public class RenderLayer implements Renderable{
             if(shader.isUniformRequired("view"))
                 shader.requiredParameter("view").set(camera.getViewMatrix());
             if(shader.isUniformRequired("aspectRatio"))
-                shader.requiredParameter("aspectRatio").set(Window.getAspectRatio());
+                shader.requiredParameter("aspectRatio").set(Window.current().getAspectRatio());
             if(shader.isUniformRequired("cameraPos"))
                 shader.requiredParameter("cameraPos").set(camera.position());
 

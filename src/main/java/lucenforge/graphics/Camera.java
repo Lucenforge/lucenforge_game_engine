@@ -35,10 +35,8 @@ public class Camera extends WorldEntity {
         }
     }
 
-    //todo make lookAt also change the rotation for controls issues
-
     public Matrix4f getProjectionMatrix() {
-        float aspectRatio = Window.getAspectRatio();
+        float aspectRatio = Window.current().getAspectRatio();
         if (isOrtho) {
             return new Matrix4f().ortho(-aspectRatio * orthoHeight, aspectRatio * orthoHeight, -orthoHeight, orthoHeight, -1.0f, 1000.0f);
         } else {
@@ -57,17 +55,13 @@ public class Camera extends WorldEntity {
 
     @Override
     public void rotate(Vector3f rotation){
-//        Log.writeln(Log.DEBUG, "Camera: rotate before: " + rotation + " " + this.rotation);
         super.rotate(rotation);
-//        Log.writeln(Log.DEBUG, "Camera: rotate after: " + rotation + " " + this.rotation);
         lookToward(this.rotation());
     }
 
     @Override
     public void setRotation(Vector3f rotation){
-//        Log.writeln(Log.DEBUG, "Camera: set rotation before: " + rotation + " " + this.rotation);
         super.setRotation(rotation);
-//        Log.writeln(Log.DEBUG, "Camera: set rotation after: " + rotation + " " + this.rotation);
         lookToward(this.rotation());
     }
 

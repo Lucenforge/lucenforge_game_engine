@@ -95,6 +95,20 @@ public class Properties {
         }
     }
 
+    public static void addComment(String section, String key, String comment) {
+        checkInit();
+        try {
+            Wini.Section s = ini.get(section);
+            if (s != null && s.getComment(key) == null) {
+                s.putComment(key, comment);
+                Log.writeln(Log.SYSTEM, "Added comment to property " + section + "." + key + ": \"" + comment + "\"");
+                ini.store();
+            }
+        } catch (IOException e) {
+            Log.writeln(Log.ERROR, "Error saving properties file: " + e.getMessage());
+        }
+    }
+
     // Preventing instantiation
     public Properties() {}
 }
