@@ -2,14 +2,16 @@ package lucenforge.graphics.text;
 
 import lucenforge.files.FileTools;
 import lucenforge.files.Log;
+import lucenforge.graphics.Texture;
 import lucenforge.graphics.primitives.Quadrilateral;
+import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBTTFontinfo;
 import org.lwjgl.stb.STBTTPackContext;
 import org.lwjgl.stb.STBTTPackedchar;
 import org.lwjgl.system.MemoryUtil;
 
-import static org.lwjgl.opengl.GL12.*;
+import static org.lwjgl.opengl.GL30.*; // for glGenerateMipmap
 import static org.lwjgl.stb.STBTruetype.*;
 
 import java.io.InputStream;
@@ -82,21 +84,28 @@ public class TextMesh extends Quadrilateral {
         stbtt_PackEnd(packContext);
 
         // Create a texture to hold the bitmap
-        int texID = glGenTextures();
-        glBindTexture(GL_TEXTURE_2D, texID);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, bitmapWidth, bitmapHeight, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//        int texID = glGenTextures();
+//        glBindTexture(GL_TEXTURE_2D, texID);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, bitmapWidth, bitmapHeight, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //todo reactivate this??
 
         // Create a map to hold the glyphs
         Map<Character, Glyph> glyphMap = new HashMap<>();
         for (char c = 32; c <= 126; c++) {
             STBTTPackedchar packedChar = charData.get(c - 32);
             glyphMap.put(c, new Glyph(packedChar));
-            Log.writeln(glyphMap.get(c));
         }
+
+        // Set up the TextMesh as a quadrilateral
+        setCorners(new Vector3f(0f, 0f, 0f),
+                   new Vector3f(0f, -1f , 0f),
+                   new Vector3f(1f , -1f , 0f),
+                   new Vector3f(1f , 0f, 0f));
+        // Set texture coordinates to cover the entire texture
+//        addTexture(new Texture(bitmap, bitmapWidth, bitmapHeight, 1)); //todo reactivate this
     }
 
 

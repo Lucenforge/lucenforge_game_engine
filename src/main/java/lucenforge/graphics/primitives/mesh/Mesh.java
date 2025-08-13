@@ -40,8 +40,7 @@ public class Mesh extends WorldEntity implements Renderable {
     // Indices
     private ArrayList<Vector3i> faces;
     // Texture
-    private Texture texture;
-    private final int textureSlot = 0;
+    private final ArrayList<Texture> textures = new ArrayList<>();
 
     private Usage usage;
     private Shader shader;
@@ -222,8 +221,11 @@ public class Mesh extends WorldEntity implements Renderable {
             return;
         }
 
-        if(texture != null)
-            texture.pushParamsToShader(shader, textureSlot);
+        for (int t = 0; t < textures.size(); t++) {
+            Texture texture = textures.get(t);
+            texture.pushParamsToShader(shader, t);
+            texture.bind(t);
+        }
 
         pushParamsToShader();
 
@@ -235,7 +237,6 @@ public class Mesh extends WorldEntity implements Renderable {
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, eboLength, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
-
     }
 
     // Compute normals for the mesh
@@ -332,11 +333,11 @@ public class Mesh extends WorldEntity implements Renderable {
     public Shader shader(){
         return shader;
     }
-    public void setTexture(Texture texture){
-        this.texture = texture;
+    public void addTexture(Texture texture){
+        textures.add(texture);
     }
-    public Texture texture() {
-        return texture;
+    public ArrayList<Texture> texture() {
+        return textures;
     }
 
     // Getters for vertices and indices
@@ -356,7 +357,7 @@ public class Mesh extends WorldEntity implements Renderable {
 
     // Cleanup method
     public void cleanup() {
-        if(texture != null)
+        for(Texture texture : textures)
             texture.cleanup();
         if (mappedBuffer != null) {
             glBindBuffer(GL_ARRAY_BUFFER, vbo);

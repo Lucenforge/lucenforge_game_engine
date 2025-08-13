@@ -23,7 +23,7 @@ public class Texture {
 
     public Texture(ByteBuffer image, int width, int height, int channels) {
         this.imageData = image;
-        Log.writeln(" - loaded: " + width + "x" + height + "x" + channels);
+        Log.writeln(" - Texture loaded: " + width + "x" + height + "x" + channels);
 
         textureID = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, textureID);
@@ -35,19 +35,32 @@ public class Texture {
         setRepeat(false);
 
         // Format matching
-        int format = (channels == 3) ? GL_RGB : GL_RGBA;
+        int format;
+        if(channels == 4)
+            format = GL_RGBA;
+        else if(channels == 3)
+            format = GL_RGB;
+        else if(channels == 1)
+            format = GL_RED;
+        else {
+            Log.writeln(Log.ERROR, "Unsupported number of channels in texture: " + channels + ", defaulting to GL_RGBA");
+            format = GL_RGBA;
+        }
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, imageData);
 
         // Mipmaps — disable if using GL_LINEAR above
-         glGenerateMipmap(GL_TEXTURE_2D);
+        glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     public void pushParamsToShader(Shader shader, int textureUnit) {
-        shader.requiredParameter("texture"+ textureUnit).set(textureUnit);
-        shader.requiredParameter("uvScale").set(uvScale);
-        shader.requiredParameter("uvOffset").set(uvOffset);
+        if(shader.isUniformRequired("texture" + textureUnit)) {
+            shader.requiredParameter("texture" + textureUnit).set(textureUnit); //todo texture unit or ID??
+        }if(shader.isUniformRequired("uvScale"))
+            shader.requiredParameter("uvScale").set(uvScale);
+        if(shader.isUniformRequired("uvOffset"))
+            shader.requiredParameter("uvOffset").set(uvOffset);
     }
 
     public void bind(int textureUnit) {
