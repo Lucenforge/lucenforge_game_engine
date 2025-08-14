@@ -4,6 +4,8 @@ import lucenforge.files.FileTools;
 import lucenforge.files.Log;
 import lucenforge.graphics.Texture;
 import lucenforge.graphics.primitives.Quadrilateral;
+import org.joml.Vector2f;
+import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBTTFontinfo;
@@ -28,6 +30,9 @@ import java.util.Map;
 
 
 public class TextMesh extends Quadrilateral {
+
+    Map<Character, Glyph> glyphMap = new HashMap<>();
+    private char glyph = 'A';
 
     public TextMesh(String fontName){
 
@@ -83,17 +88,7 @@ public class TextMesh extends Quadrilateral {
         stbtt_PackFontRange(packContext, fontBuffer, 0, fontSize, 32, charData);
         stbtt_PackEnd(packContext);
 
-        // Create a texture to hold the bitmap
-//        int texID = glGenTextures();
-//        glBindTexture(GL_TEXTURE_2D, texID);
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, bitmapWidth, bitmapHeight, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //todo reactivate this??
-
         // Create a map to hold the glyphs
-        Map<Character, Glyph> glyphMap = new HashMap<>();
         for (char c = 32; c <= 126; c++) {
             STBTTPackedchar packedChar = charData.get(c - 32);
             glyphMap.put(c, new Glyph(packedChar));
@@ -105,7 +100,7 @@ public class TextMesh extends Quadrilateral {
                    new Vector3f(1f , -1f , 0f),
                    new Vector3f(1f , 0f, 0f));
         // Set texture coordinates to cover the entire texture
-//        addTexture(new Texture(bitmap, bitmapWidth, bitmapHeight, 1)); //todo reactivate this
+        addTexture(new Texture(bitmap, bitmapWidth, bitmapHeight, 1));
     }
 
 
@@ -134,6 +129,25 @@ public class TextMesh extends Quadrilateral {
         }
 
         return buffer;
+    }
+
+    @Override
+    public void render(){
+        Vector2i textureSize = texture().get(0).getImageDimensions();
+        float x0 = glyphMap.get(glyph).x0/textureSize.x;
+        float y0 = glyphMap.get(glyph).y0/textureSize.y;
+        float x1 = glyphMap.get(glyph).x1/textureSize.x;
+        float y1 = glyphMap.get(glyph).y1/textureSize.y;
+        Log.writeln(Log.DEBUG, "Rendering glyph '" + glyph + "' with UV coords: (" + x0 + ", " + y0 + ") to (" + x1 + ", " + y1 + ")");
+        texture().get(0).setUvOffset(new Vector2f(x0, y0));
+        texture().get(0).setUvScale(new Vector2f(x1 - x0, y1 - y0));
+//        super.setScale(); //todo scale based on glyph size
+        //todo make red channel render as alpha only
+        super.render();
+    }
+
+    public void setGlyph(char glyph){
+        this.glyph = glyph;
     }
 
 

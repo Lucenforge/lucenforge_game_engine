@@ -3,6 +3,7 @@ package lucenforge.graphics;
 import lucenforge.files.Log;
 import lucenforge.graphics.shaders.Shader;
 import org.joml.Vector2f;
+import org.joml.Vector2i;
 
 import java.nio.ByteBuffer;
 
@@ -13,6 +14,7 @@ import static org.lwjgl.stb.STBImage.stbi_set_flip_vertically_on_load;
 public class Texture {
 
     private final ByteBuffer imageData;
+    private final Vector2i imageDimensions = new Vector2i();
     private final int textureID;
     private final Vector2f uvScale = new Vector2f(1, 1);
     private final Vector2f uvOffset = new Vector2f(0, 0);
@@ -24,6 +26,7 @@ public class Texture {
     public Texture(ByteBuffer image, int width, int height, int channels) {
         this.imageData = image;
         Log.writeln(" - Texture loaded: " + width + "x" + height + "x" + channels);
+        this.imageDimensions.set(width, height);
 
         textureID = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, textureID);
@@ -43,8 +46,8 @@ public class Texture {
         else if(channels == 1)
             format = GL_RED;
         else {
-            Log.writeln(Log.ERROR, "Unsupported number of channels in texture: " + channels + ", defaulting to GL_RGBA");
-            format = GL_RGBA;
+            Log.writeln(Log.ERROR, "Unknown number of channels in texture: " + channels);
+            return;
         }
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, imageData);
 
@@ -87,7 +90,10 @@ public class Texture {
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeatX ? GL_REPEAT : GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeatY ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-        glBindTexture(GL_TEXTURE_2D, 0);
         return this;
+    }
+
+    public Vector2i getImageDimensions() {
+        return imageDimensions;
     }
 }
