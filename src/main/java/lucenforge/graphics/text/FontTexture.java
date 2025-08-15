@@ -32,6 +32,10 @@ public class FontTexture{
 
     private Map<Character, Glyph> glyphMap = new HashMap<>();
     private Texture fontTexture;
+    float fontSize = 24.0f; // Default font size
+    float ascent;
+    float descent;
+    float lineGap;
 
     public FontTexture(String fontName) {
         super();
@@ -68,23 +72,29 @@ public class FontTexture{
             throw new IllegalStateException("Failed to initialize font information.");
         }
 
-        // Set the font size and scale
-        float fontSize = 24.0f;
-        float scale = stbtt_ScaleForPixelHeight(fontInfo, fontSize);
+        // Set the font size and scale (NOT SURE IF NEEDED)
+//        float scale = stbtt_ScaleForPixelHeight(fontInfo, fontSize);
 
         // Get the font metrics
         IntBuffer ascent = BufferUtils.createIntBuffer(1);
         IntBuffer descent = BufferUtils.createIntBuffer(1);
         IntBuffer lineGap = BufferUtils.createIntBuffer(1);
         stbtt_GetFontVMetrics(fontInfo, ascent, descent, lineGap);
+        this.ascent = ascent.get(0) / 64.0f; // Convert from font units to pixels
+        this.descent = descent.get(0) / 64.0f; // Convert from font units to pixels
+        this.lineGap = lineGap.get(0) / 64.0f; // Convert from font units to pixels
+        Log.writeln(Log.DEBUG, "Font metrics - Ascent: " + this.ascent + ", Descent: " + this.descent + ", Line Gap: " + this.lineGap);
 
-        int bitmapWidth = 512;
-        int bitmapHeight = 512;
+        int glyphCount = 95; // ASCII 32-126
+        float estimatedGlyphArea = fontSize * fontSize * 1.2f; // 1.2 fudge factor for spacing
+        float totalArea = glyphCount * estimatedGlyphArea;
+        int side = (int)Math.ceil(Math.sqrt(totalArea));
+        int bitmapSize = Integer.highestOneBit(side - 1) << 1;
 
         // Create a bitmap to hold the font glyphs
-        ByteBuffer bitmap = BufferUtils.createByteBuffer(bitmapWidth * bitmapHeight);
+        ByteBuffer bitmap = BufferUtils.createByteBuffer(bitmapSize * bitmapSize);
         STBTTPackContext packContext = STBTTPackContext.malloc();
-        if (!stbtt_PackBegin(packContext, bitmap, bitmapWidth, bitmapHeight, 0, 1, MemoryUtil.NULL)) {
+        if (!stbtt_PackBegin(packContext, bitmap, bitmapSize, bitmapSize, 0, 1, MemoryUtil.NULL)) {
             throw new IllegalStateException("Failed to begin packing.");
         }
         stbtt_PackSetOversampling(packContext, 2, 2);
@@ -95,10 +105,12 @@ public class FontTexture{
         // Create a map to hold the glyphs
         for (char c = 32; c <= 126; c++) {
             STBTTPackedchar packedChar = charData.get(c - 32);
-            glyphMap.put(c, new Glyph(packedChar));
+            Glyph glyph = new Glyph(packedChar);
+            glyphMap.put(c, glyph);
+            Log.writeln(String.valueOf(c) + " - width: " + (glyph.x1 - glyph.x0) + ", height: " + (glyph.y1 - glyph.y0) + ", xoff: " + glyph.xOff + ", yoff: " + glyph.yOff + ", xadvance: " + glyph.xAdvance);
         }
 
-        fontTexture = new Texture(bitmap, bitmapWidth, bitmapHeight, 1);
+        fontTexture = new Texture(bitmap, bitmapSize, bitmapSize, 1);
     }
 
 

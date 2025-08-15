@@ -37,7 +37,6 @@ public class Quadrilateral extends Mesh {
         faces.add(new Vector3i(0, 2, 3));  // Upper-right triangle
 
         computeNormals(false, verts, faces);
-
         super.setTopology(verts, faces);
     }
 

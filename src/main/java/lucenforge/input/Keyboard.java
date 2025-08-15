@@ -35,7 +35,7 @@ public class Keyboard {
     // Must be called once per frame before checking input
     public static void update() {
         keysLast.putAll(keysCurrent);
-        keysCurrent.replaceAll((key, value) -> glfwGetKey(windowID, key) == GLFW_PRESS);
+        keysCurrent.replaceAll((key, value) -> key >= 0 && glfwGetKey(windowID, key) == GLFW_PRESS);
     }
 
     // Get the char buffer and clear it

@@ -49,6 +49,9 @@ public class Mesh extends WorldEntity implements Renderable {
     FloatBuffer mappedBuffer = null;
 
     public void setTopology(ArrayList<Vertex> vertices, ArrayList<Vector3i> faces) {
+        if (vertices == null || faces == null) {
+            throw new IllegalArgumentException("Cannot set topology with null vertices or faces.");
+        }
         this.vertices = vertices;
         this.faces = faces;
     }
@@ -56,9 +59,9 @@ public class Mesh extends WorldEntity implements Renderable {
     public void init(Usage usage, Shader shader) {
         this.shader = shader;
 
-        // Fail gracefully if no vertices are provided
-        if (vertices != null && vertices.isEmpty()) {
-            Log.writeln(Log.ERROR, "Cannot initialize mesh with no vertices.");
+        // Fail if no vertices are provided
+        if (vertices == null || vertices.isEmpty()) {
+            throw new IllegalStateException("Mesh must have vertices to initialize.");
         }
 
         this.usage = usage;
@@ -292,17 +295,6 @@ public class Mesh extends WorldEntity implements Renderable {
             Vector3f key = v.position;
             v.normal = new Vector3f(normalMap.get(key)).normalize();
         }
-    }
-
-    // Get Model Matrix for rendering
-    public Matrix4f getModelMatrix() {
-        return new Matrix4f()
-                .identity()
-                .translate(position())
-                .rotateY((float)Math.toRadians(rotation().y))
-                .rotateZ((float)Math.toRadians(rotation().z))
-                .rotateX((float)Math.toRadians(rotation().x))
-                .scale(scale());
     }
 
     // Shader setters and getters
