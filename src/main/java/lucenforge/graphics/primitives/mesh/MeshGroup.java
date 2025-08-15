@@ -1,5 +1,6 @@
 package lucenforge.graphics.primitives.mesh;
 
+import lucenforge.files.Log;
 import lucenforge.graphics.shaders.Shader;
 
 import java.util.ArrayList;
