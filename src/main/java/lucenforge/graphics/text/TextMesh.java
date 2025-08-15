@@ -1,154 +1,92 @@
 package lucenforge.graphics.text;
 
-import lucenforge.files.FileTools;
-import lucenforge.files.Log;
-import lucenforge.graphics.Texture;
 import lucenforge.graphics.primitives.Quadrilateral;
+import lucenforge.graphics.primitives.mesh.Mesh;
+import lucenforge.graphics.primitives.mesh.MeshGroup;
+import lucenforge.misc.Tools;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.stb.STBTTFontinfo;
-import org.lwjgl.stb.STBTTPackContext;
-import org.lwjgl.stb.STBTTPackedchar;
-import org.lwjgl.system.MemoryUtil;
 
-import static org.lwjgl.opengl.GL30.*; // for glGenerateMipmap
-import static org.lwjgl.stb.STBTruetype.*;
+import java.util.ArrayList;
 
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
+public class TextMesh extends MeshGroup {
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.util.HashMap;
-import java.util.Map;
+    private final FontTexture fontTexture;
+    private String text = "ABC123";
 
+    private ArrayList<Vector2f> uvOffsets = new ArrayList<>();
+    private ArrayList<Vector2f> uvScales = new ArrayList<>();
 
+    private ArrayList<Vector2f> offsets = new ArrayList<>();
+    private ArrayList<Float> advance = new ArrayList<>();
+    private ArrayList<Float> widths = new ArrayList<>();
 
-public class TextMesh extends Quadrilateral {
-
-    Map<Character, Glyph> glyphMap = new HashMap<>();
-    private char glyph = 'A';
-
-    public TextMesh(String fontName){
-
-        //Todo: make font loading come from game
-        //Todo: Modularize and split this whole thing up
-
-        // Load the font file into a ByteBuffer
-        ByteBuffer fontBuffer;
-        try {
-            FileTools.createDirectory("src/main/resources/fonts");
-            // Ensure the font file exists in the specified path
-            String fontPath = "src/main/resources/fonts/" + fontName + ".ttf"; // e.g., "fonts/arial.ttf"
-            if(!FileTools.doesFileExist(fontPath)){
-                Log.writeln(Log.ERROR, "Font file not found: " + fontPath);
-            }
-            fontPath = "fonts/" + fontName + ".ttf";
-
-            URL url = Thread.currentThread().getContextClassLoader().getResource("fonts/Ariel_Rounded_MT_Bold.TTF");
-            Log.writeln(Log.TELEMETRY, "Font resource URL: " + url);
-
-            fontBuffer = ioResourceToByteBuffer(fontPath, 160 * 1024);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load font file", e);
-        }
-
-        // Create a font info object
-        STBTTFontinfo fontInfo = STBTTFontinfo.create();
-        if (!stbtt_InitFont(fontInfo, fontBuffer)) {
-            throw new IllegalStateException("Failed to initialize font information.");
-        }
-
-        // Set the font size and scale
-        float fontSize = 24.0f;
-        float scale = stbtt_ScaleForPixelHeight(fontInfo, fontSize);
-
-        // Get the font metrics
-        IntBuffer ascent = BufferUtils.createIntBuffer(1);
-        IntBuffer descent = BufferUtils.createIntBuffer(1);
-        IntBuffer lineGap = BufferUtils.createIntBuffer(1);
-        stbtt_GetFontVMetrics(fontInfo, ascent, descent, lineGap);
-
-        int bitmapWidth = 512;
-        int bitmapHeight = 512;
-
-        // Create a bitmap to hold the font glyphs
-        ByteBuffer bitmap = BufferUtils.createByteBuffer(bitmapWidth * bitmapHeight);
-        STBTTPackContext packContext = STBTTPackContext.malloc();
-        if (!stbtt_PackBegin(packContext, bitmap, bitmapWidth, bitmapHeight, 0, 1, MemoryUtil.NULL)) {
-            throw new IllegalStateException("Failed to begin packing.");
-        }
-        stbtt_PackSetOversampling(packContext, 2, 2);
-        STBTTPackedchar.Buffer charData = STBTTPackedchar.create(96); // 126 - 32 + 1 = 95 chars
-        stbtt_PackFontRange(packContext, fontBuffer, 0, fontSize, 32, charData);
-        stbtt_PackEnd(packContext);
-
-        // Create a map to hold the glyphs
-        for (char c = 32; c <= 126; c++) {
-            STBTTPackedchar packedChar = charData.get(c - 32);
-            glyphMap.put(c, new Glyph(packedChar));
-        }
-
-        // Set up the TextMesh as a quadrilateral
-        setCorners(new Vector3f(0f, 0f, 0f),
-                   new Vector3f(0f, -1f , 0f),
-                   new Vector3f(1f , -1f , 0f),
-                   new Vector3f(1f , 0f, 0f));
-        // Set texture coordinates to cover the entire texture
-        addTexture(new Texture(bitmap, bitmapWidth, bitmapHeight, 1));
+    public TextMesh(FontTexture fontTexture){
+        this.fontTexture = fontTexture;
+        setText(text);
     }
 
+    public void setText(String text){
+        this.text = text;
 
-    public static ByteBuffer ioResourceToByteBuffer(String resource, int bufferSize) throws IOException {
-        ByteBuffer buffer;
+        //Clear existing data
+        meshes.clear();
+        uvOffsets.clear();
+        uvScales.clear();
+        offsets.clear();
+        advance.clear();
+        widths.clear();
 
-        try (
-                InputStream source = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
-                ReadableByteChannel rbc = Channels.newChannel(source)
-        ) {
-            buffer = BufferUtils.createByteBuffer(bufferSize);
-
-            while (true) {
-                int bytes = rbc.read(buffer);
-                if (bytes == -1) break;
-                if (buffer.remaining() == 0) {
-                    // Double the buffer size
-                    ByteBuffer newBuffer = BufferUtils.createByteBuffer(buffer.capacity() * 2);
-                    buffer.flip();
-                    newBuffer.put(buffer);
-                    buffer = newBuffer;
-                }
-            }
-
-            buffer.flip();
+        //Go through each character in the text
+        float advanceSubtotal = 0f;
+        for (int charIndex = 0; charIndex < text.length(); charIndex++) {
+            char c = text.charAt(charIndex);
+            loadStats(c);
+            //Create a quad for it
+            Quadrilateral characterMesh = new Quadrilateral();
+            addMesh(new Quadrilateral());
+            characterMesh.setCorners(
+                    new Vector3f(0f, 0f, 0f),
+                    new Vector3f(0f, -1f , 0f),
+                    new Vector3f(widths.get(charIndex) , -1f , 0f),
+                    new Vector3f(widths.get(charIndex) , 0f, 0f)
+            );
+            // Set the offset
+            characterMesh.setPosition(new Vector3f(offsets.get(charIndex).x + advanceSubtotal,offsets.get(charIndex).y,0));
+            advanceSubtotal += advance.get(charIndex);
+            // Set texture coordinates to cover the entire texture
+            characterMesh.addTexture(fontTexture.texture());
         }
-
-        return buffer;
     }
 
     @Override
-    public void render(){
-        Vector2i textureSize = texture().get(0).getImageDimensions();
-        float x0 = glyphMap.get(glyph).x0/textureSize.x;
-        float y0 = glyphMap.get(glyph).y0/textureSize.y;
-        float x1 = glyphMap.get(glyph).x1/textureSize.x;
-        float y1 = glyphMap.get(glyph).y1/textureSize.y;
-        Log.writeln(Log.DEBUG, "Rendering glyph '" + glyph + "' with UV coords: (" + x0 + ", " + y0 + ") to (" + x1 + ", " + y1 + ")");
-        texture().get(0).setUvOffset(new Vector2f(x0, y0));
-        texture().get(0).setUvScale(new Vector2f(x1 - x0, y1 - y0));
-//        super.setScale(); //todo scale based on glyph size
-        //todo make red channel render as alpha only
-        super.render();
+    public void render() {
+        for(int characterIndex = 0; characterIndex < meshes.size(); characterIndex++) {
+
+            Mesh characterQuad = meshes.get(characterIndex);
+
+            characterQuad.textures().get(0).setUvOffset(uvOffsets.get(characterIndex));
+            characterQuad.textures().get(0).setUvScale(uvScales.get(characterIndex));
+
+            characterQuad.render();
+        }
     }
 
-    public void setGlyph(char glyph){
-        this.glyph = glyph;
-    }
+    private void loadStats(char c){
+        Vector2i textureSize = fontTexture.texture().getImageDimensions();
+        Glyph glyph = fontTexture.getGlyph(c);
+        float x0 = glyph.x0/textureSize.x;
+        float y0 = glyph.y0/textureSize.y;
+        float x1 = glyph.x1/textureSize.x;
+        float y1 = glyph.y1/textureSize.y;
 
+        uvOffsets.add(new Vector2f(x0, y0));
+        uvScales.add(new Vector2f(x1 - x0, y1 - y0));
+        // Calculate the position of the quad in NDC
+        offsets.add(new Vector2f(Tools.pxToNDC((int)glyph.xoff), Tools.pxToNDC((int)glyph.yoff)));
+        advance.add(Tools.pxToNDC((int)glyph.xadvance));
+        widths.add((x1 - x0)/(y1 - y0));
+    }
 
 }

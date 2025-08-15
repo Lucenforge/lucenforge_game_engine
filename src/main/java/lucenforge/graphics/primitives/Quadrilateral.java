@@ -32,7 +32,7 @@ public class Quadrilateral extends Mesh {
         verts.get(3).texture = new Vector2f(width , 0  ); // bottom-right
 
         // Define the indices for the two triangles that make up the quadrilateral
-        ArrayList<Vector3i> faces = new ArrayList<Vector3i>();
+        ArrayList<Vector3i> faces = new ArrayList<>();
         faces.add(new Vector3i(0, 1, 2));  // Lower-left triangle
         faces.add(new Vector3i(0, 2, 3));  // Upper-right triangle
 

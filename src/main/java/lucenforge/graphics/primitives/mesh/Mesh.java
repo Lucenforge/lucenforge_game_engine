@@ -57,7 +57,7 @@ public class Mesh extends WorldEntity implements Renderable {
         this.shader = shader;
 
         // Fail gracefully if no vertices are provided
-        if (vertices.isEmpty()) {
+        if (vertices != null && vertices.isEmpty()) {
             Log.writeln(Log.ERROR, "Cannot initialize mesh with no vertices.");
         }
 
@@ -336,7 +336,7 @@ public class Mesh extends WorldEntity implements Renderable {
     public void addTexture(Texture texture){
         textures.add(texture);
     }
-    public ArrayList<Texture> texture() {
+    public ArrayList<Texture> textures() {
         return textures;
     }
 
