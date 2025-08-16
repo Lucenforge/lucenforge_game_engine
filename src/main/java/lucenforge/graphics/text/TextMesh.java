@@ -4,7 +4,6 @@ import lucenforge.files.Log;
 import lucenforge.graphics.primitives.Quadrilateral;
 import lucenforge.graphics.primitives.mesh.Mesh;
 import lucenforge.graphics.primitives.mesh.MeshGroup;
-import lucenforge.misc.Tools;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
@@ -14,13 +13,13 @@ import java.util.ArrayList;
 public class TextMesh extends MeshGroup {
 
     private final FontTexture fontTexture;
-    private String text = "abcdefghijklmnopqrstuvwxyz";//"Avyanna! Orion! Mama!";//
+    private String text = "Avyanna! Orion! Mama! Papi!!!!!!";////"abcdefghijklmnopqrstuvwxyz";//
 
     private ArrayList<Vector2f> uvOffsets = new ArrayList<>();
     private ArrayList<Vector2f> uvScales = new ArrayList<>();
 
     private ArrayList<Vector2f> offsets = new ArrayList<>();
-    private ArrayList<Float> advance = new ArrayList<>();
+    private ArrayList<Float> advances = new ArrayList<>();
     private ArrayList<Vector2f> sizes = new ArrayList<>();
 
     public TextMesh(FontTexture fontTexture){
@@ -36,7 +35,7 @@ public class TextMesh extends MeshGroup {
         uvOffsets.clear();
         uvScales.clear();
         offsets.clear();
-        advance.clear();
+        advances.clear();
         sizes.clear();
 
         //Go through each character in the text
@@ -54,7 +53,7 @@ public class TextMesh extends MeshGroup {
             addMesh(characterMesh);
             // Set the offset
             characterMesh.setPosition(new Vector3f(offsets.get(charIndex).x + advanceSubtotal,offsets.get(charIndex).y,0));
-            advanceSubtotal += advance.get(charIndex);
+            advanceSubtotal += advances.get(charIndex);
 //            advanceSubtotal += widths.get(charIndex);
             // Set texture coordinates to cover the entire texture
             characterMesh.addTexture(fontTexture.texture());
@@ -86,21 +85,23 @@ public class TextMesh extends MeshGroup {
         uvScales.add(new Vector2f(x1 - x0, y1 - y0));
 
         // Use font ascent for vertical alignment
-        float ascent = fontTexture.ascent; // distance from the baseline to the highest point of the font's glyphs.
-        float descent = fontTexture.descent; // distance from the baseline to the lowest point of the glyphs, typically a negative value.
-        float scale = ascent - descent; // total height of the font glyphs
+        float ascent = fontTexture.ascent / fontTexture.fontSize; // distance from the baseline to the highest point of the font's glyphs.
+        float descent = fontTexture.descent / fontTexture.fontSize; // distance from the baseline to the lowest point of the glyphs, typically a negative value.
+        float ptHeight = ascent - descent; // total height of the font
+        float advance = glyph.xAdvance / fontTexture.fontSize; // horizontal advance of the glyph
+        Log.writeln("Font metrics - ascent: " + ascent + ", descent: " + descent + ", height: " + ptHeight);
 
-        float width = glyph.x1 - glyph.x0;
-        float height = glyph.y1 - glyph.y0;
+        float height = (glyph.y1 - glyph.y0) / fontTexture.maxGlyphHeightPx;
+        float width = (glyph.x1 - glyph.x0) / (glyph.y1 - glyph.y0);
 
         // Offset from baseline (ascent is positive down)
-        float offsetXPx = glyph.xOff;
-        float offsetYPx = ascent - glyph.yOff; // align to baseline
+        float offsetX = glyph.xOff / (glyph.y1 - glyph.y0); // align to left edge
+        float offsetY = glyph.yOff / (glyph.y1 - glyph.y0) + descent; // align to baseline
 
         // Normalize
-        offsets.add(new Vector2f(offsetXPx / scale, -offsetYPx / scale));
-        sizes.add(new Vector2f(width / scale, height / scale));
-        advance.add(glyph.xAdvance / scale);
+        offsets.add(new Vector2f(offsetX, offsetY));
+        sizes.add(new Vector2f(width, height));
+        advances.add(advance * 1.8f);
     }
 
 }

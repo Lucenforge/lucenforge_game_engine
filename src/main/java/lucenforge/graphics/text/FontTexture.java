@@ -3,10 +3,6 @@ package lucenforge.graphics.text;
 import lucenforge.files.FileTools;
 import lucenforge.files.Log;
 import lucenforge.graphics.Texture;
-import lucenforge.graphics.primitives.Quadrilateral;
-import org.joml.Vector2f;
-import org.joml.Vector2i;
-import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBTTFontinfo;
 import org.lwjgl.stb.STBTTPackContext;
@@ -36,6 +32,7 @@ public class FontTexture{
     float ascent;
     float descent;
     float lineGap;
+    float maxGlyphHeightPx = 0f; // Maximum height of any glyph in the font
 
     public FontTexture(String fontName) {
         super();
@@ -107,7 +104,8 @@ public class FontTexture{
             STBTTPackedchar packedChar = charData.get(c - 32);
             Glyph glyph = new Glyph(packedChar);
             glyphMap.put(c, glyph);
-            Log.writeln(String.valueOf(c) + " - width: " + (glyph.x1 - glyph.x0) + ", height: " + (glyph.y1 - glyph.y0) + ", xoff: " + glyph.xOff + ", yoff: " + glyph.yOff + ", xadvance: " + glyph.xAdvance);
+            maxGlyphHeightPx = Math.max(maxGlyphHeightPx, glyph.y1 - glyph.y0);
+            Log.writeln(c + " - width: " + (glyph.x1 - glyph.x0) + ", height: " + (glyph.y1 - glyph.y0) + ", xoff: " + glyph.xOff + ", yoff: " + glyph.yOff + ", xadvance: " + glyph.xAdvance);
         }
 
         fontTexture = new Texture(bitmap, bitmapSize, bitmapSize, 1);
