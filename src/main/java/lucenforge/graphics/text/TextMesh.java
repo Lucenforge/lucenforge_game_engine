@@ -13,7 +13,7 @@ import java.util.ArrayList;
 public class TextMesh extends MeshGroup {
 
     private final FontTexture fontTexture;
-    private String text = "Avyanna! Orion! Mama! Papi!!!!!!";////"abcdefghijklmnopqrstuvwxyz";//
+    private String text = "abcdefghijklmnopqrstuvwxyz";//"Avyanna! Orion! Mama! Papi!!!!!!";//
 
     private ArrayList<Vector2f> uvOffsets = new ArrayList<>();
     private ArrayList<Vector2f> uvScales = new ArrayList<>();
@@ -45,10 +45,11 @@ public class TextMesh extends MeshGroup {
             loadStats(c);
             //Create a quad for it
             Quadrilateral characterMesh = new Quadrilateral(
+                    new Vector3f(0f                  , sizes.get(charIndex).y , 0),
                     new Vector3f(0f                  , 0f                   , 0),
-                    new Vector3f(0f                  , -sizes.get(charIndex).y , 0),
-                    new Vector3f(sizes.get(charIndex).x , -sizes.get(charIndex).y , 0),
-                    new Vector3f(sizes.get(charIndex).x , 0f                   , 0)
+                    new Vector3f(sizes.get(charIndex).x , 0f                   , 0),
+                    new Vector3f(sizes.get(charIndex).x , sizes.get(charIndex).y , 0)
+
             );
             addMesh(characterMesh);
             // Set the offset
@@ -87,21 +88,20 @@ public class TextMesh extends MeshGroup {
         // Use font ascent for vertical alignment
         float ascent = fontTexture.ascent / fontTexture.fontSize; // distance from the baseline to the highest point of the font's glyphs.
         float descent = fontTexture.descent / fontTexture.fontSize; // distance from the baseline to the lowest point of the glyphs, typically a negative value.
-        float ptHeight = ascent - descent; // total height of the font
         float advance = glyph.xAdvance / fontTexture.fontSize; // horizontal advance of the glyph
-        Log.writeln("Font metrics - ascent: " + ascent + ", descent: " + descent + ", height: " + ptHeight);
+        Log.writeln("Font metrics - ascent: " + ascent + ", descent: " + descent + ", height: " + fontTexture.fontSize);
 
         float height = (glyph.y1 - glyph.y0) / fontTexture.maxGlyphHeightPx;
-        float width = (glyph.x1 - glyph.x0) / (glyph.y1 - glyph.y0);
+        float width = (glyph.x1 - glyph.x0) / fontTexture.maxGlyphHeightPx;
 
         // Offset from baseline (ascent is positive down)
-        float offsetX = glyph.xOff / (glyph.y1 - glyph.y0); // align to left edge
-        float offsetY = glyph.yOff / (glyph.y1 - glyph.y0) + descent; // align to baseline
+        float offsetX = glyph.xOff / fontTexture.fontSize; // align to left edge
+        float offsetY = glyph.xOff / fontTexture.fontSize;
 
         // Normalize
         offsets.add(new Vector2f(offsetX, offsetY));
         sizes.add(new Vector2f(width, height));
-        advances.add(advance * 1.8f);
+        advances.add(advance);
     }
 
 }
