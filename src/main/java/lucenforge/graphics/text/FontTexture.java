@@ -105,7 +105,6 @@ public class FontTexture{
             Glyph glyph = new Glyph(packedChar);
             glyphMap.put(c, glyph);
             maxGlyphHeightPx = Math.max(maxGlyphHeightPx, glyph.y1 - glyph.y0);
-            Log.writeln(c + " - width: " + (glyph.x1 - glyph.x0) + ", height: " + (glyph.y1 - glyph.y0) + ", xoff: " + glyph.xOff + ", yoff: " + glyph.yOff + ", xadvance: " + glyph.xAdvance);
         }
 
         fontTexture = new Texture(bitmap, bitmapSize, bitmapSize, 1);
