@@ -34,6 +34,11 @@ public class FontTexture{
     float lineGap;
     float maxGlyphHeightPx = 0f; // Maximum height of any glyph in the font
 
+    public FontTexture(String fontName, float fontSize) {
+        super();
+        this.fontSize = fontSize;
+        loadFont(fontName);
+    }
     public FontTexture(String fontName) {
         super();
         loadFont(fontName);
@@ -55,8 +60,8 @@ public class FontTexture{
             }
             fontPath = "fonts/" + fontName + ".ttf";
 
-            URL url = Thread.currentThread().getContextClassLoader().getResource("fonts/Ariel_Rounded_MT_Bold.TTF");
-            Log.writeln(Log.TELEMETRY, "Font resource URL: " + url);
+            URL url = Thread.currentThread().getContextClassLoader().getResource(fontPath);
+            Log.writeln(Log.TELEMETRY, "Font Loaded @: " + url);
 
             fontBuffer = ioResourceToByteBuffer(fontPath, 160 * 1024);
         } catch (IOException e) {
@@ -80,7 +85,6 @@ public class FontTexture{
         this.ascent = ascent.get(0) / 64.0f; // Convert from font units to pixels
         this.descent = descent.get(0) / 64.0f; // Convert from font units to pixels
         this.lineGap = lineGap.get(0) / 64.0f; // Convert from font units to pixels
-        Log.writeln(Log.DEBUG, "Font metrics - Ascent: " + this.ascent + ", Descent: " + this.descent + ", Line Gap: " + this.lineGap);
 
         int glyphCount = 95; // ASCII 32-126
         float estimatedGlyphArea = fontSize * fontSize * 1.2f; // 1.2 fudge factor for spacing
