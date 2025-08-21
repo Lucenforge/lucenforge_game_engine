@@ -1,6 +1,7 @@
 package lucenforge.graphics.text;
 
 import lucenforge.files.Log;
+import lucenforge.graphics.GraphicsManager;
 import lucenforge.graphics.primitives.Quadrilateral;
 import lucenforge.graphics.primitives.mesh.Mesh;
 import lucenforge.graphics.primitives.mesh.MeshGroup;
@@ -10,6 +11,7 @@ import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+
 
 public class TextMesh extends MeshGroup {
 
@@ -34,7 +36,7 @@ public class TextMesh extends MeshGroup {
     public void setText(String text){
         this.text = text;
 
-        // Temporaraly hold the shader and usage type
+        // Temporarily hold the shader and usage type
         Mesh.Usage oldUsage = null;
         Shader oldShader = null;
         if(!meshes.isEmpty()) {
@@ -67,13 +69,12 @@ public class TextMesh extends MeshGroup {
             float advance = advances.get(charIndex - numSkippedChars);
 
             // Create quad at (0, 0) to (width, height)
-            float zOffset = (2 * ((charIndex - numSkippedChars) % 2) - 1) * 0.01f; // Slight offset for visibility
             // todo fix multiple alpha issue
             Quadrilateral characterMesh = new Quadrilateral(
-                    new Vector3f(0f  , size.y, zOffset),
-                    new Vector3f(0f  , 0f , zOffset),
-                    new Vector3f(size.x , 0f , zOffset),
-                    new Vector3f(size.x , size.y, zOffset)
+                    new Vector3f(0f  , size.y, 0),
+                    new Vector3f(0f  , 0f , 0),
+                    new Vector3f(size.x , 0f , 0),
+                    new Vector3f(size.x , size.y, 0)
             );
 
             // Position quad at (penX + offsetX, penY + offsetY)
@@ -99,6 +100,7 @@ public class TextMesh extends MeshGroup {
 
     @Override
     public void render() {
+        GraphicsManager.enableDepthMask(false);
         for(int characterIndex = 0; characterIndex < meshes.size(); characterIndex++) {
 
             Mesh characterQuad = meshes.get(characterIndex);
@@ -108,6 +110,7 @@ public class TextMesh extends MeshGroup {
 
             characterQuad.render();
         }
+        GraphicsManager.enableDepthMask(true);
     }
 
     private void loadStats(char c){
@@ -145,12 +148,13 @@ public class TextMesh extends MeshGroup {
 
     public void setAlignment(Vector2f newAlignment) {
         // Recalculate positions based on new alignment
+        Vector3f translation = new Vector3f(
+                textSize.x * (-newAlignment.x + alignment.x),
+                -newAlignment.y + alignment.y,
+                0f  // Z position can be adjusted if needed
+        );
         for (Mesh mesh : meshes) {
-            mesh.translate(new Vector3f(
-                    textSize.x * (-newAlignment.x + alignment.x),
-                    -newAlignment.y + alignment.y,
-                    0f  // Z position can be adjusted if needed
-            ));
+            mesh.translate(translation);
         }
         this.alignment = newAlignment;
     }

@@ -38,7 +38,8 @@ public class GraphicsManager {
         glViewport(0, 0, window.width(), window.height());  // Set the viewport to the window size
         glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (multisampling)
         // Make internal geometry "mostly transparent"
-        glPolygonMode(GL_BACK, GL_LINE); //GL_FRONT_AND_BACK
+//        glPolygonMode(GL_BACK, GL_LINE); //GL_FRONT_AND_BACK
+        glPolygonMode(GL_BACK, GL_FILL); //GL_FRONT_AND_BACK
 
         Log.writeln(Log.SYSTEM, "Graphics: OpenGL version: " + glGetString(GL_VERSION));
         Log.writeln(Log.SYSTEM, "Graphics: Renderer: " + glGetString(GL_RENDERER) + ", Vendor: " + glGetString(GL_VENDOR));
@@ -109,6 +110,19 @@ public class GraphicsManager {
             layer.cleanup();
         }
         renderLayers.clear();
+    }
+
+    public static void enableDepthTest(boolean enable) {
+        if (enable) {
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LEQUAL); // Set depth function to less than or equal
+        } else {
+            glDisable(GL_DEPTH_TEST);
+        }
+    }
+
+    public static void enableDepthMask(boolean enable) {
+        glDepthMask(enable);
     }
 
     private GraphicsManager(){} // Prevent instantiation

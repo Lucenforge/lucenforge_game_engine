@@ -55,9 +55,9 @@ public class FontTexture{
             FileTools.createDirectory("src/main/resources/fonts");
             // Ensure the font file exists in the specified path
             String fontPath = "src/main/resources/fonts/" + fontName + ".ttf"; // e.g., "fonts/arial.ttf"
-            if(!FileTools.doesFileExist(fontPath)){
-                Log.writeln(Log.ERROR, "Font file not found: " + fontPath);
-            }
+//            if(!FileTools.doesFileExist(fontPath)){
+//                Log.writeln(Log.ERROR, "Font file not found: " + fontPath);
+//            }
             fontPath = "fonts/" + fontName + ".ttf";
 
             URL url = Thread.currentThread().getContextClassLoader().getResource(fontPath);
