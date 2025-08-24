@@ -53,11 +53,9 @@ public class MeshGroup extends Mesh{
 
     @Override
     public void setParam(String name, Object value){
-        if(shader() != null && shader().requiredParameter(name)){
-            Log.writeln(Log.ERROR, "MeshGroup: Shader does not have parameter '" + name + "'!");
-            return;
-        }
+        if(super.shader() != null && shader().isUniformRequired(name)){
             super.setParam(name, value);
+        }
         for(Mesh mesh : meshes){
             mesh.setParam(name, value);
         }

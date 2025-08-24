@@ -312,6 +312,10 @@ public class Mesh extends WorldEntity implements Renderable {
         params.get(paramName).set(value);
     }
 
+    public HashMap<String, ShaderParameter> getParams(){
+        return params;
+    }
+
     public void setShader(String shaderName){
         if (GraphicsManager.masterShaders.containsKey(shaderName)) {
             setShader(GraphicsManager.masterShaders.get(shaderName));

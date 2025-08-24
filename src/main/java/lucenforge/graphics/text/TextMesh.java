@@ -6,11 +6,13 @@ import lucenforge.graphics.primitives.Quadrilateral;
 import lucenforge.graphics.primitives.mesh.Mesh;
 import lucenforge.graphics.primitives.mesh.MeshGroup;
 import lucenforge.graphics.shaders.Shader;
+import lucenforge.graphics.shaders.ShaderParameter;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class TextMesh extends MeshGroup {
@@ -100,7 +102,6 @@ public class TextMesh extends MeshGroup {
 
     @Override
     public void render() {
-        GraphicsManager.enableDepthMask(false);
         for(int characterIndex = 0; characterIndex < meshes.size(); characterIndex++) {
 
             Mesh characterQuad = meshes.get(characterIndex);
@@ -110,7 +111,6 @@ public class TextMesh extends MeshGroup {
 
             characterQuad.render();
         }
-        GraphicsManager.enableDepthMask(true);
     }
 
     private void loadStats(char c){

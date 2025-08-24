@@ -6,6 +6,7 @@ public class Physics {
 
     private static long gameStartTimeMillis;
     private static long framesSinceStart;
+    private static int fps;
 
     private static long updateStartTime;
     private static long deltaTimeMillis = 0;
@@ -29,6 +30,8 @@ public class Physics {
         deltaTimeMillis = millisNow - updateStartTime;
         updateStartTime = millisNow;
         framesSinceStart++;
+        if(deltaTimeMillis() > 0)
+            fps = (int) (1000 / deltaTimeMillis);
     }
 
     public static long deltaTimeMillis(){
@@ -40,4 +43,5 @@ public class Physics {
     public static long framesSinceStart(){
         return framesSinceStart;
     }
+    public static int fps(){return fps;}
 }
