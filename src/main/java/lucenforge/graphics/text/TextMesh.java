@@ -29,6 +29,7 @@ public class TextMesh extends MeshGroup {
     private ArrayList<Vector2f> sizes = new ArrayList<>();
 
     private Vector2f alignment = new Vector2f(0, 0); // Alignment vector (0, 0) is left-bottom, (1, 1) is right-top
+    private float characterSpacing = 0.05f; // Additional spacing between characters in world units
 
     public TextMesh(FontTexture fontTexture){
         this.fontTexture = fontTexture;
@@ -87,7 +88,7 @@ public class TextMesh extends MeshGroup {
             characterMesh.addTexture(fontTexture.texture());
 
             // Advance pen position
-            pen.x += advance + 0.05f;
+            pen.x += advance + characterSpacing;
         }
 
         // Calculate text size based on the last character's position
@@ -162,6 +163,11 @@ public class TextMesh extends MeshGroup {
     // Get Text Size in world units
     public Vector2f getTextSize() {
         return textSize;
+    }
+
+    public void setCharacterSpacing(float spacing){
+        this.characterSpacing = spacing;
+        setText(text);
     }
 
 }
