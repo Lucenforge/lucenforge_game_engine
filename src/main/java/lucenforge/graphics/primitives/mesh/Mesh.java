@@ -358,8 +358,6 @@ public class Mesh extends WorldEntity implements Renderable {
 
     // Cleanup method
     public void cleanup() {
-        for(Texture texture : textures)
-            texture.cleanup();
         if (mappedBuffer != null) {
             glBindBuffer(GL_ARRAY_BUFFER, vbo);
             glUnmapBuffer(GL_ARRAY_BUFFER);

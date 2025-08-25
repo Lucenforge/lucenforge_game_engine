@@ -48,8 +48,8 @@ public class TextMesh extends MeshGroup {
         }
 
         //Clear existing data
-        meshes.clear();
         super.cleanup();
+        meshes.clear();
         uvOffsets.clear();
         uvScales.clear();
         offsets.clear();
@@ -99,6 +99,8 @@ public class TextMesh extends MeshGroup {
         if (oldShader != null && oldUsage != null) {
             init(oldUsage, oldShader);
         }
+        // Set alignment to re-position text
+        setAlignment(alignment);
     }
 
     @Override
@@ -150,9 +152,9 @@ public class TextMesh extends MeshGroup {
     public void setAlignment(Vector2f newAlignment) {
         // Recalculate positions based on new alignment
         Vector3f translation = new Vector3f(
-                textSize.x * (-newAlignment.x + alignment.x),
-                -newAlignment.y + alignment.y,
-                0f  // Z position can be adjusted if needed
+                -textSize.x * newAlignment.x,
+                -newAlignment.y,
+                0f
         );
         for (Mesh mesh : meshes) {
             mesh.translate(translation);

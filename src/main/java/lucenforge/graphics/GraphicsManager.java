@@ -19,10 +19,11 @@ public class GraphicsManager {
 
     // Lookup table for shaders
     public static HashMap<String, Shader> masterShaders = new HashMap<>();
+    public static ArrayList<Texture> masterTextures = new ArrayList<>();
     // List of all render layers
     private static final ArrayList<RenderLayer> renderLayers = new ArrayList<>();
 
-    private static final float[] fpsRecord = new float[100];
+    private static final float[] fpsRecord = new float[10];
     private static int fpsRecordIndex = 0;
     private static long targetFrameTime;
     private static long nextFrameTargetTimestamp;
@@ -106,10 +107,18 @@ public class GraphicsManager {
 
     public static void cleanup() {
         // Cleanup all render layers
-        for (RenderLayer layer : renderLayers) {
+        for (RenderLayer layer : renderLayers)
             layer.cleanup();
-        }
         renderLayers.clear();
+        // Cleanup all shaders
+        for (Shader shader : masterShaders.values())
+            shader.cleanup();
+        masterShaders.clear();
+        // Cleanup all textures
+        for (Texture texture : masterTextures)
+            texture.cleanup();
+        masterTextures.clear();
+        Log.writeln(Log.SYSTEM, "Graphics cleaned up.");
     }
 
     public static void enableDepthTest(boolean enable) {
