@@ -59,6 +59,9 @@ public class ShaderParameter {
         }
         this.value = v;
     }
+    public Object getValue(){
+        return value;
+    }
 
     public void pushToShader() {
         if (!isSet()) {

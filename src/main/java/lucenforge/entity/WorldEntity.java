@@ -1,5 +1,6 @@
 package lucenforge.entity;
 
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public class WorldEntity {
@@ -13,11 +14,10 @@ public class WorldEntity {
     public void setParent(WorldEntity parent){
         this.parent = parent;
     }
+    public WorldEntity parent(){return parent;}
 
     // Position
     public Vector3f position(){
-        if(this.parent != null)
-            return new Vector3f(parent.position()).add(this.position);
         return position;
     }
     public void setPosition(Vector3f position){
@@ -27,8 +27,6 @@ public class WorldEntity {
 
     // Rotation
     public Vector3f rotation(){
-        if(this.parent != null)
-            return this.parent.rotation().add(rotation);
         return rotation;
     }
     public void rotate(Vector3f angles){
@@ -40,8 +38,6 @@ public class WorldEntity {
 
     // Scale
     public Vector3f scale(){
-        if(this.parent != null)
-            return new Vector3f(parent.scale()).mul(this.scale);
         return scale;
     }
     public void setScale(float scale){
@@ -49,5 +45,21 @@ public class WorldEntity {
     }
     public void setScale(Vector3f scale){
         this.scale = scale;
+    }
+
+    // Get Model Matrix for rendering
+    public Matrix4f getModelMatrix() {
+        Matrix4f local = new Matrix4f()
+                .identity()
+                .translate(position())
+                .rotateY((float)Math.toRadians(rotation().y))
+                .rotateZ((float)Math.toRadians(rotation().z))
+                .rotateX((float)Math.toRadians(rotation().x))
+                .scale(scale());
+
+        if (parent() != null) {
+            return new Matrix4f(parent.getModelMatrix()).mul(local);
+        }
+        return local;
     }
 }

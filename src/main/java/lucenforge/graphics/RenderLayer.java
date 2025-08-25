@@ -21,6 +21,7 @@ public class RenderLayer implements Renderable{
     private final ArrayList<Renderable> shaderlessRenderables = new ArrayList<>();
 
     private Camera camera;
+    private boolean disableDepth = false;
 
     public RenderLayer(){
         GraphicsManager.registerRenderLayer(this);
@@ -75,12 +76,16 @@ public class RenderLayer implements Renderable{
         // Clear the screen
         if(clearDepth)
             Engine.clearDepthBuffer();
-        // Enable blending todo make these settable
-        glEnable(GL_BLEND);
-        // Enable depth testing
-        glEnable(GL_DEPTH_TEST);
+        // Enable or depth testing
+        if(disableDepth){
+            glDisable(GL_DEPTH_TEST);
+        } else {
+            glEnable(GL_DEPTH_TEST);
+        }
         // Disable culling (for 2D rendering, we want to render all faces)
 //        glDisable(GL_CULL_FACE);
+        // Enable blending
+        glEnable(GL_BLEND);
         // Set the alpha bit in color to blend like expected
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -131,5 +136,8 @@ public class RenderLayer implements Renderable{
         }
     }
 
+    public void disableDepth(boolean disableDepth) {
+        this.disableDepth = disableDepth;
+    }
 
 }

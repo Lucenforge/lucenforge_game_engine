@@ -19,10 +19,11 @@ public class GraphicsManager {
 
     // Lookup table for shaders
     public static HashMap<String, Shader> masterShaders = new HashMap<>();
+    public static ArrayList<Texture> masterTextures = new ArrayList<>();
     // List of all render layers
     private static final ArrayList<RenderLayer> renderLayers = new ArrayList<>();
 
-    private static final float[] fpsRecord = new float[100];
+    private static final float[] fpsRecord = new float[10];
     private static int fpsRecordIndex = 0;
     private static long targetFrameTime;
     private static long nextFrameTargetTimestamp;
@@ -38,7 +39,8 @@ public class GraphicsManager {
         glViewport(0, 0, window.width(), window.height());  // Set the viewport to the window size
         glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (multisampling)
         // Make internal geometry "mostly transparent"
-        glPolygonMode(GL_BACK, GL_LINE); //GL_FRONT_AND_BACK
+//        glPolygonMode(GL_BACK, GL_LINE); //GL_FRONT_AND_BACK
+        glPolygonMode(GL_BACK, GL_FILL); //GL_FRONT_AND_BACK
 
         Log.writeln(Log.SYSTEM, "Graphics: OpenGL version: " + glGetString(GL_VERSION));
         Log.writeln(Log.SYSTEM, "Graphics: Renderer: " + glGetString(GL_RENDERER) + ", Vendor: " + glGetString(GL_VENDOR));
@@ -105,10 +107,31 @@ public class GraphicsManager {
 
     public static void cleanup() {
         // Cleanup all render layers
-        for (RenderLayer layer : renderLayers) {
+        for (RenderLayer layer : renderLayers)
             layer.cleanup();
-        }
         renderLayers.clear();
+        // Cleanup all shaders
+        for (Shader shader : masterShaders.values())
+            shader.cleanup();
+        masterShaders.clear();
+        // Cleanup all textures
+        for (Texture texture : masterTextures)
+            texture.cleanup();
+        masterTextures.clear();
+        Log.writeln(Log.SYSTEM, "Graphics cleaned up.");
+    }
+
+    public static void enableDepthTest(boolean enable) {
+        if (enable) {
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LEQUAL); // Set depth function to less than or equal
+        } else {
+            glDisable(GL_DEPTH_TEST);
+        }
+    }
+
+    public static void enableDepthMask(boolean enable) {
+        glDepthMask(enable);
     }
 
     private GraphicsManager(){} // Prevent instantiation

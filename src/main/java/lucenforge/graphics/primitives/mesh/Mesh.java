@@ -40,8 +40,7 @@ public class Mesh extends WorldEntity implements Renderable {
     // Indices
     private ArrayList<Vector3i> faces;
     // Texture
-    private Texture texture;
-    private final int textureSlot = 0;
+    private final ArrayList<Texture> textures = new ArrayList<>();
 
     private Usage usage;
     private Shader shader;
@@ -50,6 +49,9 @@ public class Mesh extends WorldEntity implements Renderable {
     FloatBuffer mappedBuffer = null;
 
     public void setTopology(ArrayList<Vertex> vertices, ArrayList<Vector3i> faces) {
+        if (vertices == null || faces == null) {
+            throw new IllegalArgumentException("Cannot set topology with null vertices or faces.");
+        }
         this.vertices = vertices;
         this.faces = faces;
     }
@@ -57,9 +59,9 @@ public class Mesh extends WorldEntity implements Renderable {
     public void init(Usage usage, Shader shader) {
         this.shader = shader;
 
-        // Fail gracefully if no vertices are provided
-        if (vertices.isEmpty()) {
-            Log.writeln(Log.ERROR, "Cannot initialize mesh with no vertices.");
+        // Fail if no vertices are provided
+        if (vertices == null || vertices.isEmpty()) {
+            throw new IllegalStateException("Mesh must have vertices to initialize.");
         }
 
         this.usage = usage;
@@ -222,8 +224,11 @@ public class Mesh extends WorldEntity implements Renderable {
             return;
         }
 
-        if(texture != null)
-            texture.pushParamsToShader(shader, textureSlot);
+        for (int t = 0; t < textures.size(); t++) {
+            Texture texture = textures.get(t);
+            texture.pushParamsToShader(shader, t);
+            texture.bind(t);
+        }
 
         pushParamsToShader();
 
@@ -235,7 +240,6 @@ public class Mesh extends WorldEntity implements Renderable {
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, eboLength, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
-
     }
 
     // Compute normals for the mesh
@@ -293,17 +297,6 @@ public class Mesh extends WorldEntity implements Renderable {
         }
     }
 
-    // Get Model Matrix for rendering
-    public Matrix4f getModelMatrix() {
-        return new Matrix4f()
-                .identity()
-                .translate(position())
-                .rotateY((float)Math.toRadians(rotation().y))
-                .rotateZ((float)Math.toRadians(rotation().z))
-                .rotateX((float)Math.toRadians(rotation().x))
-                .scale(scale());
-    }
-
     // Shader setters and getters
     public void setParam(String paramName, Object value) {
         if(shader == null) {
@@ -319,6 +312,10 @@ public class Mesh extends WorldEntity implements Renderable {
         params.get(paramName).set(value);
     }
 
+    public HashMap<String, ShaderParameter> getParams(){
+        return params;
+    }
+
     public void setShader(String shaderName){
         if (GraphicsManager.masterShaders.containsKey(shaderName)) {
             setShader(GraphicsManager.masterShaders.get(shaderName));
@@ -332,11 +329,16 @@ public class Mesh extends WorldEntity implements Renderable {
     public Shader shader(){
         return shader;
     }
-    public void setTexture(Texture texture){
-        this.texture = texture;
+
+    public Usage usage() {
+        return usage;
     }
-    public Texture texture() {
-        return texture;
+
+    public void addTexture(Texture texture){
+        textures.add(texture);
+    }
+    public ArrayList<Texture> textures() {
+        return textures;
     }
 
     // Getters for vertices and indices
@@ -356,8 +358,6 @@ public class Mesh extends WorldEntity implements Renderable {
 
     // Cleanup method
     public void cleanup() {
-        if(texture != null)
-            texture.cleanup();
         if (mappedBuffer != null) {
             glBindBuffer(GL_ARRAY_BUFFER, vbo);
             glUnmapBuffer(GL_ARRAY_BUFFER);
