@@ -10,7 +10,6 @@ import lucenforge.graphics.shaders.ShaderParameter;
 import lucenforge.graphics.shaders.VertexAttributeType;
 import org.joml.*;
 
-import java.lang.Math;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -304,7 +303,7 @@ public class Mesh extends WorldEntity implements Renderable {
             return;
         }
         if (!params.containsKey(paramName)) {
-            ShaderParameter paramFromShader = shader.requiredParameter(paramName);
+            ShaderParameter paramFromShader = shader.getParam(paramName);
             if(paramFromShader == null) //Parameter not required by shader
                 return;
             params.put(paramName, new ShaderParameter(paramFromShader));

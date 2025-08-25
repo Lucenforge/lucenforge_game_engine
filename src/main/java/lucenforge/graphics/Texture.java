@@ -25,7 +25,6 @@ public class Texture {
 
     public Texture(ByteBuffer image, int width, int height, int channels) {
         this.imageData = image;
-        Log.writeln(" - Texture loaded: " + width + "x" + height + "x" + channels);
         this.imageDimensions.set(width, height);
 
         textureID = glGenTextures();
@@ -62,11 +61,11 @@ public class Texture {
 
     public void pushParamsToShader(Shader shader, int textureUnit) {
         if(shader.isUniformRequired("texture" + textureUnit)) {
-            shader.requiredParameter("texture" + textureUnit).set(textureUnit); //todo texture unit or ID??
+            shader.getParam("texture" + textureUnit).set(textureUnit); //todo texture unit or ID??
         }if(shader.isUniformRequired("uvScale"))
-            shader.requiredParameter("uvScale").set(uvScale);
+            shader.getParam("uvScale").set(uvScale);
         if(shader.isUniformRequired("uvOffset"))
-            shader.requiredParameter("uvOffset").set(uvOffset);
+            shader.getParam("uvOffset").set(uvOffset);
     }
 
     public void bind(int textureUnit) {

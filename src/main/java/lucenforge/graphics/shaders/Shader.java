@@ -1,6 +1,7 @@
 package lucenforge.graphics.shaders;
 
 import lucenforge.files.Log;
+import lucenforge.graphics.GraphicsManager;
 
 import java.util.HashMap;
 
@@ -121,7 +122,7 @@ public class Shader {
         return name;
     }
 
-    public ShaderParameter requiredParameter(String name){
+    public ShaderParameter getParam(String name){
         if(reqUniforms.containsKey(name))
             return reqUniforms.get(name);
         else{
@@ -129,11 +130,22 @@ public class Shader {
             return null;
         }
     }
-    public void setParam(String name, ShaderParameter param){
+    public void setParam(String name, Object value){
+        setParam(name, value, false);
+    }
+    public void setParam(String name, ShaderParameter value){
+        setParam(name, value.getValue(), false);
+    }
+    private void setParam(String name, Object value, boolean silent){
         if(reqUniforms.containsKey(name))
-            reqUniforms.put(name, param);
-        else{
+            reqUniforms.get(name).set(value);
+        else if(!silent){
             Log.writeln(Log.WARNING, "Skipping setting " + name + " as it's not a required parameter for shader " + this.name);
+        }
+    }
+    public static void setParamOnAllShaders(String name, Object value){
+        for(Shader shader : GraphicsManager.masterShaders.values()){
+            shader.setParam(name, value, true);
         }
     }
 }
