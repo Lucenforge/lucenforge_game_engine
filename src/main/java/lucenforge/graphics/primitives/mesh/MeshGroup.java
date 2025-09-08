@@ -89,6 +89,8 @@ public class MeshGroup extends Mesh{
 
     @Override
     public void init(Usage usage, Shader shader){
+        super.setShader(shader);
+        super.setUsage(usage);
         for(Mesh mesh : meshes){
             mesh.init(usage, shader);
         }

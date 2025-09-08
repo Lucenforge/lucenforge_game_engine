@@ -9,6 +9,7 @@ public class Log {
     private static BufferedWriter writer;
     private static String lastLine = "";
     private static Boolean loggingEnabled = null;
+    private static int numRepeats = 1;
 
     public static void checkInit(){
         // Check if logging is enabled from properties
@@ -49,21 +50,28 @@ public class Log {
     }
     public static void write(String logType, Object message) {
         checkInit();
-        System.out.print(logType);
 
-        if(logType.equals(ERROR))
+        if(logType.equals(ERROR)) {
             message = "ERROR: " + message;
-        else if(logType.equals(WARNING))
+        }else if(logType.equals(WARNING)) {
             message = "WARNING: " + message;
+        }
 
-        if(message.toString().equals(lastLine))
+        if(message.toString().equals(lastLine)) {
+            numRepeats++;
+            lastLine = message.toString();
             return; // Don't log the same message twice
+        }else if(numRepeats > 1) {
+            lastLine = message.toString();
+            message = SYSTEM+"^^ (x" + numRepeats + ")\n" + logType + message;
+            numRepeats = 1;
+        }else{
+            lastLine = message.toString();
+        };
 
         System.out.print(message);
         if(loggingEnabled)
             sendToLogFile(message.toString());
-
-        lastLine = message.toString();
     }
 
     // Write into log (with new-line)

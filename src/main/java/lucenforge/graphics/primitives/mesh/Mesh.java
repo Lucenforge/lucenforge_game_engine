@@ -329,6 +329,9 @@ public class Mesh extends WorldEntity implements Renderable {
         return shader;
     }
 
+    public void setUsage(Usage usage) {
+        this.usage = usage;
+    }
     public Usage usage() {
         return usage;
     }
