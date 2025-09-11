@@ -13,6 +13,7 @@ target/
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+.idea/copilot.data.migration.agent.xml
 
 # Allow shared project settings
 !.idea/modules.xml
